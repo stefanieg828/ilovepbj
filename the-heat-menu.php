@@ -84,6 +84,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(12px); background: <?php echo $is_sweet ? '#E55163' : '#1A2A44'; ?>; color: white; padding: 10px 18px; border-radius: 999px; opacity: 0; transition: all 0.25s; z-index: 2100; pointer-events: none; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         .hint { font-size: 0.92rem; opacity: 0.75; margin: 0 0 10px; line-height: 1.4; }
+        .suggest-banner { margin-top: 8px; padding: 10px 12px; border-radius: 12px; font-size: 0.92rem; line-height: 1.4; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; <?php if ($is_sweet): ?>background: #FFF5F6; border: 1px solid #F3C5CC;<?php else: ?>background: #EEF2F8; border: 1px solid #C5D0DE;<?php endif; ?> }
+        .suggest-banner strong { <?php if ($is_sweet): ?>color: #E55163;<?php else: ?>color: #1A2A44;<?php endif; ?> }
         .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
         .filter-chip { border: none; border-radius: 999px; padding: 8px 14px; font-size: 0.9rem; cursor: pointer; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.06); <?php if ($is_sweet): ?>font-family: 'DreamingOutLoudPro', serif; color: #3a2f1f;<?php else: ?>font-family: 'Lora', serif; color: #1A2A44;<?php endif; ?> }
         .filter-chip.active { <?php if ($is_sweet): ?>background: #E55163; color: white;<?php else: ?>background: #1A2A44; color: white;<?php endif; ?> }
@@ -129,7 +131,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <form id="add-form">
                 <div class="field"><label><?php echo $is_sweet ? 'Menu name' : 'Menu name'; ?></label><input id="f-name" required placeholder="<?php echo $is_sweet ? 'e.g. Classic PB&J' : 'Item name'; ?>"></div>
                 <div class="field-row">
-                    <div class="field"><label><?php echo $is_sweet ? 'Sell price ($)' : 'Sell price ($)'; ?></label><input id="f-price" type="number" min="0" step="0.01" required placeholder="0.00"></div>
+                    <div class="field"><label><?php echo $is_sweet ? 'Sell price ($)' : 'Sell price ($)'; ?></label><input id="f-price" type="number" min="0" step="0.01" required placeholder="0.00"><div id="f-suggest" class="suggest-banner" style="display:none;margin-top:8px;"></div></div>
                     <div class="field"><label><?php echo $is_sweet ? 'Menu category' : 'Menu category'; ?></label>
                         <select id="f-cat">
                             <option value="appetizers"><?php echo $is_sweet ? 'Appetizers' : 'Appetizers'; ?></option>
@@ -210,7 +212,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 <input type="hidden" id="e-id">
                 <div class="field"><label><?php echo $is_sweet ? 'Menu name' : 'Menu name'; ?></label><input id="e-name" required></div>
                 <div class="field-row">
-                    <div class="field"><label><?php echo $is_sweet ? 'Sell price ($)' : 'Sell price ($)'; ?></label><input id="e-price" type="number" min="0" step="0.01" required></div>
+                    <div class="field"><label><?php echo $is_sweet ? 'Sell price ($)' : 'Sell price ($)'; ?></label><input id="e-price" type="number" min="0" step="0.01" required><div id="e-suggest" class="suggest-banner" style="display:none;margin-top:8px;"></div></div>
                     <div class="field"><label><?php echo $is_sweet ? 'Category' : 'Category'; ?></label>
                         <select id="e-cat">
                             <option value="appetizers"><?php echo $is_sweet ? 'Appetizers' : 'Appetizers'; ?></option>
@@ -232,7 +234,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
     </div>
     <div class="toast" id="toast"><?php echo $is_sweet ? 'Saved 💾' : 'Saved'; ?></div>
     <?php include 'bottom-nav.php'; ?>
-    <script src="/food-cost-shared.js?v=2"></script>
+    <script src="/food-cost-shared.js?v=3"></script>
     <script>
     (function () {
         const KEY = 'pbj_menu_v1';
@@ -385,6 +387,33 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         var filter = 'all';
         var modal = document.getElementById('modal');
 
+
+        function fillSuggestBanner(el, portionCost, targetInputId) {
+            if (!el) return;
+            if (!FC || !FC.suggestedSellPrices || portionCost == null || isNaN(portionCost)) {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            var sug = FC.suggestedSellPrices(portionCost);
+            if (!sug) {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            el.style.display = 'flex';
+            el.innerHTML = (isSweet ? 'Suggested menu price: ' : 'Suggested menu price: ') +
+                '<strong>' + money(sug.at30) + '–' + money(sug.at25) + '</strong>' +
+                ' <span class="muted">(25–30% FC)</span>' +
+                ' · mid <strong>' + money(sug.at275) + '</strong>' +
+                '<button type="button" class="btn btn-small btn-primary" data-act="apply-suggest" data-target="' + esc(targetInputId) + '" data-price="' + sug.at275 + '">' +
+                (isSweet ? 'Apply mid' : 'Apply mid') + '</button>';
+        }
+        function shouldShowSuggestForPrice(priceVal) {
+            var p = parseFloat(priceVal);
+            return priceVal === '' || priceVal == null || isNaN(p) || p <= 0;
+        }
+
         function enrich(it) {
             var sell = parseFloat(it.price);
             var plate = plateCostForMenuId(it.id, master);
@@ -514,6 +543,19 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             }
             root.innerHTML = list.map(function (e) {
                 var it = e.it;
+                var sugHtml = '';
+                if (e.per != null && shouldShowSuggestForPrice(it.price)) {
+                    var sug = (FC && FC.suggestedSellPrices) ? FC.suggestedSellPrices(e.per) : null;
+                    if (sug) {
+                        sugHtml = '<div class="suggest-banner no-print">' +
+                            (isSweet ? 'Suggested menu price: ' : 'Suggested menu price: ') +
+                            '<strong>' + money(sug.at30) + '–' + money(sug.at25) + '</strong>' +
+                            ' <span class="muted">(25–30% FC)</span>' +
+                            ' · mid <strong>' + money(sug.at275) + '</strong>' +
+                            '<button type="button" class="btn btn-small btn-primary" data-act="apply-list-price" data-need-perm="boh.recipes.menu_edit" data-id="' + esc(it.id) + '" data-price="' + sug.at275 + '">' +
+                            (isSweet ? 'Apply mid' : 'Apply mid') + '</button></div>';
+                    }
+                }
                 return '<div class="item ' + fcClass(e.fc) + '"><h3>' + esc(it.name) + ' ' + fcBadge(e.fc) + bucketBadge(e.bucket) + '</h3>' +
                     '<div class="meta"><span class="price">' + money(e.sell) + '</span> · ' +
                     esc(CAT_LABELS[it.category] || it.category || 'Other') +
@@ -522,7 +564,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                     '<span>' + (isSweet ? 'Plate cost: ' : 'Plate: ') + '<strong>' + (e.per != null ? money(e.per) : '—') + '</strong></span>' +
                     '<span>' + (isSweet ? 'Contribution: ' : 'Contrib: ') + '<strong>' + (e.contrib != null ? money(e.contrib) : '—') + '</strong></span>' +
                     (e.plate && e.plate.recipe ? '<span class="muted">' + (isSweet ? 'via ' : 'via ') + esc(e.plate.recipe) + '</span>' : '') +
-                    '</div>' +
+                    '</div>' + sugHtml +
                     '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;">' +
                     '<button type="button" class="btn btn-small btn-ghost" data-act="edit" data-need-perm="boh.recipes.menu_edit" data-id="' + esc(it.id) + '">' + (isSweet ? 'Edit' : 'Edit') + '</button>' +
                     '<button type="button" class="btn btn-small btn-danger" data-act="del" data-need-perm="boh.recipes.menu_edit" data-id="' + esc(it.id) + '">' + (isSweet ? 'Remove' : 'Remove') + '</button>' +
@@ -560,6 +602,12 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             var id = btn.dataset.id;
             var it = state.items.find(function (x) { return x.id === id; });
             if (!it) return;
+            if (btn.dataset.act === 'apply-list-price') {
+                var applyPrice = parseFloat(btn.dataset.price);
+                if (isNaN(applyPrice)) return;
+                it.price = String(applyPrice);
+                save(true); render(); return;
+            }
             if (btn.dataset.act === 'del') {
                 if (!confirm(isSweet ? 'Remove this menu item?' : 'Remove this menu item?')) return;
                 state.items = state.items.filter(function (x) { return x.id !== id; });
@@ -570,6 +618,12 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             document.getElementById('e-price').value = it.price != null ? it.price : '';
             document.getElementById('e-cat').value = it.category || 'other';
             document.getElementById('e-notes').value = it.notes || '';
+            master = loadMaster();
+            var plate = plateCostForMenuId(it.id, master);
+            var priceVal = document.getElementById('e-price').value;
+            // Show while editing whenever plate cost exists (empty price or revising)
+            if (plate && plate.per != null) fillSuggestBanner(document.getElementById('e-suggest'), plate.per, 'e-price');
+            else fillSuggestBanner(document.getElementById('e-suggest'), null, 'e-price');
             modal.classList.add('show');
         });
 
@@ -585,6 +639,18 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             save(true); modal.classList.remove('show'); render();
         });
         document.getElementById('e-cancel').addEventListener('click', function () { modal.classList.remove('show'); });
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-act="apply-suggest"]');
+            if (!btn) return;
+            e.preventDefault();
+            var targetId = btn.dataset.target;
+            var price = parseFloat(btn.dataset.price);
+            var input = targetId ? document.getElementById(targetId) : null;
+            if (!input || isNaN(price)) return;
+            input.value = String(price);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
         modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('show'); });
 
         document.getElementById('print-btn').addEventListener('click', function () {

@@ -70,6 +70,11 @@
         return out;
     }
 
+    /**
+     * Cost of one edible recipe unit — matches admin-costing.
+     * Conversion (case ÷ packs × recipe units) first; optional directRecipeUnitCost;
+     * do NOT fall back to inventory costPerUnit (pack/case, not recipe unit).
+     */
     function costPerRecipeUnit(item) {
         if (!item) return null;
         var caseP = item.casePrice != null && item.casePrice !== '' ? parseFloat(item.casePrice) : null;
@@ -81,9 +86,8 @@
             cpu = caseP / (packs * perPack);
         } else if (item.directRecipeUnitCost != null && item.directRecipeUnitCost !== '') {
             cpu = parseFloat(item.directRecipeUnitCost);
-        } else if (item.costPerUnit != null && item.costPerUnit !== '') {
-            cpu = parseFloat(item.costPerUnit);
         }
+        // TODO: inventory costPerUnit is pack/case — intentionally not used (aligns with admin-costing)
         if (cpu == null || isNaN(cpu)) return null;
         var y = parseFloat(item.usableYieldPct);
         if (!isNaN(y) && y > 0 && y < 100) cpu = cpu / (y / 100);
@@ -397,6 +401,23 @@
         return ideal;
     }
 
+
+    /**
+     * Suggested menu sell prices for a target food-cost band (25–30% FC).
+     * @param {number} portionCost plate/portion food cost in $
+     * @returns {{ at25:number, at275:number, at30:number }|null}
+     */
+    function suggestedSellPrices(portionCost) {
+        var c = parseFloat(portionCost);
+        if (isNaN(c) || c < 0) return null;
+        function round2(n) { return Math.round(n * 100) / 100; }
+        return {
+            at25: round2(c / 0.25),
+            at275: round2(c / 0.275),
+            at30: round2(c / 0.30)
+        };
+    }
+
     global.PbjFoodCost = {
         RECIPE_KEY: RECIPE_KEY,
         ING_KEY: ING_KEY,
@@ -411,6 +432,7 @@
         costPerRecipeUnit: costPerRecipeUnit,
         findIngredient: findIngredient,
         plateCostForMenuId: plateCostForMenuId,
+        suggestedSellPrices: suggestedSellPrices,
         findMenuItemByName: findMenuItemByName,
         loadPmix: loadPmix,
         savePmix: savePmix,
