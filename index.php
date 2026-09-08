@@ -337,7 +337,7 @@ $plans = pbj_plans();
             <a class="nav-link" href="#plans">Plans</a>
             <a class="nav-link" href="/join">I have a code</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
-            <a class="btn btn-mint btn-sm" href="/register?plan=crew_10">Start free trial</a>
+            <a class="btn btn-mint btn-sm" href="/register?mode=playground">Try playground</a>
         </div>
     </nav>
 
@@ -348,11 +348,11 @@ $plans = pbj_plans();
             built for real restaurants, not spreadsheets that melt at 5&nbsp;p.m.
         </p>
         <div class="hero-ctas">
-            <a class="btn btn-primary" href="/register?plan=crew_10">Start 14-day free trial</a>
-            <a class="btn btn-purple" href="/join">Join with a code</a>
-            <a class="btn btn-ghost" href="/login">Log in</a>
+            <a class="btn btn-primary" href="/register?mode=playground">Try the playground</a>
+            <a class="btn btn-purple" href="/register?plan=crew_10">Start 14-day free trial</a>
+            <a class="btn btn-ghost" href="/join">Join with a code</a>
         </div>
-        <p class="hero-sub">14 days free · no card required · then house pricing by headcount</p>
+        <p class="hero-sub">Playground = username + email + password · no card · convert to a real house anytime</p>
     </header>
 
     <div class="band-mint">
@@ -515,7 +515,7 @@ $plans = pbj_plans();
 
     <footer class="footer">
         <p>ilovepbj ops · restaurant ops with heart</p>
-        <p><a href="/login">Log in</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a></p>
+        <p><a href="/login">Log in</a> · <a href="/register?mode=playground">Try playground</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a></p>
         <p>
             <a href="/privacy">Privacy</a> ·
             <a href="/terms">Terms</a> ·
