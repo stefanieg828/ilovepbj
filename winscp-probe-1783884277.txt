@@ -1,0 +1,1 @@
+If you see this text, WinSCP and the website are on THIS same server.

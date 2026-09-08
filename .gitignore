@@ -1,0 +1,12 @@
+node_modules/
+.git/
+dist/
+.next/
+build/
+coverage/
+*.log
+.env
+.env.*
+stripe-key.txt
+*-secrets.local.php
+!*-secrets.local.php.example

@@ -1,0 +1,2 @@
+Stripe keys must NOT be uploaded into /var/www/html (public web).
+They live on the server in a private folder only the app can read.

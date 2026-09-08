@@ -1,0 +1,59 @@
+{
+    "folders": [
+        {
+            "id": "f_food",
+            "name": "Food & Beverage",
+            "sort": 0,
+            "createdAt": 0
+        },
+        {
+            "id": "f_alcohol",
+            "name": "Alcohol",
+            "sort": 1,
+            "createdAt": 0
+        },
+        {
+            "id": "f_paper",
+            "name": "Paper & Disposables",
+            "sort": 2,
+            "createdAt": 0
+        },
+        {
+            "id": "f_cleaning",
+            "name": "Cleaning & Janitorial",
+            "sort": 3,
+            "createdAt": 0
+        }
+    ],
+    "invoices": [
+        {
+            "id": "f64a4b34c69d274b",
+            "folderId": "f_food",
+            "filename": "f64a4b34c69d274b.jpg",
+            "originalName": "1784752838028734632197864009089.jpg",
+            "title": "Test pic",
+            "note": "",
+            "mime": "image\/jpeg",
+            "size": 1322786,
+            "url": "\/uploads\/invoices\/1\/f64a4b34c69d274b.jpg",
+            "createdAt": 1784752841876,
+            "updatedAt": 1784753017418,
+            "createdBy": 3
+        },
+        {
+            "id": "0b2ee4bc53998550",
+            "folderId": "f_paper",
+            "filename": "0b2ee4bc53998550.png",
+            "originalName": "Screenshot_20260720-131533.png",
+            "title": "Test upload",
+            "note": "",
+            "mime": "image\/png",
+            "size": 546631,
+            "url": "\/uploads\/invoices\/1\/0b2ee4bc53998550.png",
+            "createdAt": 1784752986717,
+            "updatedAt": 1784753000574,
+            "createdBy": 3
+        }
+    ],
+    "updatedAt": 1784753017418
+}

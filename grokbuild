@@ -1,0 +1,47 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+    echo "Usage: ./grokbuild PageName"
+    echo "Example: ./grokbuild foh"
+    exit 1
+fi
+
+PAGE=$1
+FILENAME="${PAGE}.php"
+
+cat > "$FILENAME" << 'EOP'
+<?php
+require_once 'config.php';
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+$is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $is_sweet ? 'PAGE_TITLE' : 'PAGE_TITLE_BASIC'; ?> • ilovepbj ops</title>
+    <?php if (!$is_sweet): ?>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Gabriola&display=swap" rel="stylesheet">
+    <?php endif; ?>
+    <style>
+        /* Your styles will go here */
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+    <div style="padding: 80px 20px; text-align: center;">
+        <h1><?php echo $is_sweet ? 'PAGE_TITLE' : 'PAGE_TITLE_BASIC'; ?></h1>
+        <p>This is the new page!</p>
+    </div>
+
+    <?php include 'bottom-nav.php'; ?>
+</body>
+</html>
+EOP
+
+echo "✅ Created $FILENAME"
+echo "Now edit it and replace PAGE_TITLE with what you want!"

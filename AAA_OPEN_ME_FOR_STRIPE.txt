@@ -1,0 +1,2 @@
+Stripe is already configured on this server.
+Do not drop secret keys into this website folder — they would be public on the internet.

@@ -1,0 +1,20 @@
+# ilovepbj ops — public crawl rules
+User-agent: *
+Allow: /
+
+# Private / app internals (not for search results)
+Disallow: /drafts/
+Disallow: /approve-users
+Disallow: /approve-users.php
+Disallow: /platform
+Disallow: /platform-console.php
+Disallow: /waiting
+Disallow: /waiting.php
+Disallow: /home
+Disallow: /billing/
+Disallow: /shared-state-api.php
+Disallow: /permissions-api.php
+Disallow: /stripe-checkout.php
+Disallow: /stripe-webhook.php
+
+Sitemap: https://ilovepbj.shop/sitemap.xml
