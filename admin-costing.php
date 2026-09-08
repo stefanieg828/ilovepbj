@@ -183,6 +183,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
     </div>
     <div class="toast" id="toast"><?php echo $is_sweet ? 'Prices saved 💾' : 'Prices saved'; ?></div>
     <?php include 'bottom-nav.php'; ?>
+    <script src="/food-cost-shared.js?v=3"></script>
 
     <script>
     (function () {
@@ -287,11 +288,66 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             });
             return best ? { yield: best.y, label: best.l, key: best.k } : null;
         }
-        function fcBadge(pct) {
-            if (pct == null || isNaN(pct)) return '<span class="badge badge-na">' + (isSweet ? 'No FC yet' : 'No FC') + '</span>';
+        function fcBadge(pct, reason) {
+            if (pct == null || isNaN(pct)) {
+                var why = reason ? (' · ' + reason) : '';
+                return '<span class="badge badge-na">' + (isSweet ? 'No FC yet' : 'No FC') + why + '</span>';
+            }
             if (pct < 30) return '<span class="badge badge-good">' + pct + '% FC · good</span>';
             if (pct <= 35) return '<span class="badge badge-mid">' + pct + '% FC · watch</span>';
             return '<span class="badge badge-high">' + pct + '% FC · high</span>';
+        }
+        function suggestedPricesHtml(portionCost, recipeId, menuItemId) {
+            var FC = window.PbjFoodCost;
+            if (!FC || !FC.suggestedSellPrices) return '';
+            var sug = FC.suggestedSellPrices(portionCost);
+            if (!sug) return '';
+            var tip = '';
+            var menu = null;
+            if (menuItemId) {
+                var items = loadMenu();
+                menu = items.find(function (x) { return String(x.id) === String(menuItemId); }) || null;
+            }
+            var hasSell = menu && !isNaN(parseFloat(menu.price)) && parseFloat(menu.price) > 0;
+            if (!hasSell) {
+                tip = '<span class="muted" style="font-size:0.88rem;">' +
+                    (isSweet ? 'Tip: apply mid (~27.5% FC) to set the linked menu price' : 'Tip: apply mid (~27.5% FC) as sell price') +
+                    '</span>';
+            }
+            return '<div class="suggest-banner" data-suggest-price>' +
+                (isSweet ? 'Suggested menu price: ' : 'Suggested menu price: ') +
+                '<strong>' + money(sug.at30) + '–' + money(sug.at25) + '</strong>' +
+                ' <span class="muted">(25–30% FC)</span>' +
+                ' · mid <strong>' + money(sug.at275) + '</strong>' +
+                '<button type="button" class="btn btn-small btn-primary" data-act="apply-menu-price"' +
+                ' data-recipe-id="' + esc(recipeId || '') + '"' +
+                ' data-menu-id="' + esc(menuItemId || '') + '"' +
+                ' data-price="' + sug.at275 + '">' +
+                (isSweet ? 'Apply mid' : 'Apply mid') + '</button>' +
+                tip +
+                '</div>';
+        }
+        function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+        function saveMenuItems(items) {
+            localStorage.setItem(MENU_KEY, JSON.stringify({ items: items }));
+        }
+        function setRecipeMenuItemId(recipeId, menuItemId) {
+            if (!recipeId) return false;
+            try {
+                var raw = JSON.parse(localStorage.getItem(RECIPE_KEY) || 'null');
+                if (!raw || !Array.isArray(raw.categories)) return false;
+                var found = false;
+                raw.categories.forEach(function (cat) {
+                    (cat.recipes || []).forEach(function (rec) {
+                        if (String(rec.id) === String(recipeId)) {
+                            rec.menuItemId = menuItemId;
+                            found = true;
+                        }
+                    });
+                });
+                if (found) localStorage.setItem(RECIPE_KEY, JSON.stringify(raw));
+                return found;
+            } catch (e) { return false; }
         }
         function loadMenu() {
             try {
@@ -557,7 +613,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 }).join('');
 
                 var portions = parseFloat(r.portions);
-                var per = (!isNaN(portions) && portions > 0 && missing === 0) ? total / portions : null;
+                var hasPortions = !isNaN(portions) && portions > 0;
+                var per = (hasPortions && missing === 0) ? total / portions : null;
                 var yieldTxt = '';
                 if (r.yieldQty !== '' && r.yieldQty != null) {
                     yieldTxt = String(r.yieldQty) + (r.yieldUnit ? ' ' + r.yieldUnit : '');
@@ -569,6 +626,13 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                     ? Math.round((per / menu.price) * 1000) / 10
                     : null;
                 var contrib = (menu && per != null) ? menu.price - per : null;
+                var noFcReason = '';
+                if (foodCostPct == null) {
+                    if (missing) noFcReason = isSweet ? 'needs prices' : 'needs prices';
+                    else if (!hasPortions) noFcReason = isSweet ? 'no portions' : 'no portions';
+                    else if (!menu) noFcReason = isSweet ? 'no menu price' : 'no menu price';
+                    else if (!(menu.price > 0)) noFcReason = isSweet ? 'no sell price' : 'no sell price';
+                }
                 if (foodCostPct != null) {
                     engN++;
                     engSum += foodCostPct;
@@ -576,8 +640,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                     if (foodCostPct > 35) engHigh++;
                 }
 
-                return '<div class="recipe-cost">' +
-                    '<h3>' + esc(r.title) + ' ' + fcBadge(foodCostPct) + '</h3>' +
+                return '<div class="recipe-cost" data-recipe-id="' + esc(r.id || '') + '">' +
+                    '<h3>' + esc(r.title) + ' ' + fcBadge(foodCostPct, noFcReason) + '</h3>' +
                     '<p class="muted">' + esc(row.cat) + (yieldTxt ? ' · Yield ' + esc(yieldTxt) : '') +
                     (r.portions ? ' · ' + esc(r.portions) + ' portions' : '') +
                     (menu ? ' · Menu ' + money(menu.price) : '') + '</p>' +
@@ -588,6 +652,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                         (foodCostPct != null ? '<span>' + (isSweet ? 'Food cost %: ' : 'Food cost %: ') + '<strong>' + foodCostPct + '%</strong></span>' : '') +
                         (contrib != null ? '<span>' + (isSweet ? 'Contribution: ' : 'Contribution: ') + '<strong>' + money(contrib) + '</strong></span>' : '') +
                     '</div>' +
+                    (per != null ? suggestedPricesHtml(per, r.id, r.menuItemId || '') : '') +
                     (missing ? '<p class="warn">' + (isSweet ? '* Some ingredients need case conversion or price — open Prices & conversions' : '* Some ingredients need conversion or price') + '</p>' : '') +
                     lines +
                     '</div>';
@@ -806,6 +871,45 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 : (isSweet ? 'No blank matches found (or already set)' : 'No blank matches found');
             toast.classList.add('show');
             setTimeout(function () { toast.classList.remove('show'); }, 1400);
+        });
+
+        document.getElementById('recipe-costs').addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-act="apply-menu-price"]');
+            if (!btn) return;
+            if (!canP('boh.recipes.costing_edit') && !canP('boh.recipes.menu_edit')) return;
+            var price = parseFloat(btn.dataset.price);
+            if (isNaN(price) || price < 0) return;
+            var menuId = btn.dataset.menuId || '';
+            var recipeId = btn.dataset.recipeId || '';
+            var items = loadMenu();
+            var item = menuId ? items.find(function (x) { return String(x.id) === String(menuId); }) : null;
+            var created = false;
+            if (!item) {
+                var card = btn.closest('.recipe-cost');
+                var titleEl = card ? card.querySelector('h3') : null;
+                var name = titleEl ? titleEl.childNodes[0].textContent.trim() : 'Menu item';
+                menuId = menuId || uid();
+                item = {
+                    id: menuId,
+                    name: name,
+                    price: String(price),
+                    category: 'mains',
+                    notes: ''
+                };
+                items.push(item);
+                created = true;
+                if (recipeId) setRecipeMenuItemId(recipeId, menuId);
+            } else {
+                item.price = String(price);
+            }
+            saveMenuItems(items);
+            renderRecipes();
+            var toast = document.getElementById('toast');
+            toast.textContent = created
+                ? (isSweet ? 'Menu item created @ ' + money(price) + ' ✨' : 'Menu item created @ ' + money(price))
+                : (isSweet ? 'Menu price set to ' + money(price) + ' ✨' : 'Menu price set to ' + money(price));
+            toast.classList.add('show');
+            setTimeout(function () { toast.classList.remove('show'); }, 1200);
         });
 
         document.getElementById('print-recipes-btn').addEventListener('click', function () {

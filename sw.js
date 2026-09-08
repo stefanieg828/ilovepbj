@@ -37,7 +37,7 @@ var PRECACHE = [
   '/admin/pnl',
   '/admin/waste',
   '/admin/pmix',
-  '/food-cost-shared.js?v=2',
+  '/food-cost-shared.js?v=3',
   '/pos-sync-client.js?v=3',
   '/FOH/opening-closing',
   '/FOH/sidework',
