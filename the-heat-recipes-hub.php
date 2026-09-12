@@ -109,6 +109,11 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 <h3><?php echo $is_sweet ? '86 Board' : '86 Board'; ?></h3>
                 <p><?php echo $is_sweet ? 'What’s out or running low — syncs to the line' : 'Out of stock / low — syncs to kitchen display'; ?></p>
             </a>
+            <a href="/BOH/allergens" data-perm-any="boh.recipes.menu_view,boh.recipes.menu_edit,boh.tools.use" class="card">
+                <?php pbj_render_card_icon('recipes-hub/allergen-menu', 'Allergen Menu', '⚠️'); ?>
+                <h3><?php echo $is_sweet ? 'Allergen Menu' : 'Allergen Menu'; ?></h3>
+                <p><?php echo $is_sweet ? 'Big 9 staff matrix — optional FOH/BOH reference' : 'Optional US Big 9 matrix for guest questions'; ?></p>
+            </a>
             <a href="/BOH/86/display" data-perm-any="boh.recipes.menu_view,boh.recipes.menu_edit,boh.tools.use" class="card">
                 <?php pbj_render_card_icon('recipes-hub/86-display', '86 Kitchen Display', '📺'); ?>
                 <h3><?php echo $is_sweet ? '86 Kitchen Display' : '86 Kitchen Display'; ?></h3>
