@@ -2081,6 +2081,8 @@ function pbj_page_routes(): array {
         'the-heat-menu.php' => '/BOH/menu',
         'the-heat-recipes.php' => '/BOH/recipe-cards',
         'the-heat-yields.php' => '/BOH/yields',
+        'the-heat-86.php' => '/BOH/86',
+        'the-heat-86-display.php' => '/BOH/86/display',
         // Settings cards
         'whiskings-theme.php' => '/settings/theme',
         'whiskings-profile.php' => '/settings/profile',
