@@ -14,6 +14,10 @@ if (empty($_SESSION['user_id']) || (int)$_SESSION['user_id'] <= 0) {
 // Must be approved before picking theme (pending users stay on waiting)
 if (!pbj_user_is_approved()) {
     $st = $_SESSION['access_status'] ?? 'pending';
+    if ($st === 'archived') {
+        header('Location: /waiting?archived=1');
+        exit();
+    }
     header('Location: /waiting' . ($st === 'blocked' ? '?blocked=1' : ''));
     exit();
 }

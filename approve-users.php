@@ -174,6 +174,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = $result['error'] ?? 'Reset failed.';
             $editId = $targetId;
         }
+    } elseif ($targetId > 0 && $action === 'archive') {
+        if (!function_exists('pbj_admin_archive_user')) {
+            $error = 'Archive helper missing.';
+        } else {
+            $result = pbj_admin_archive_user($pdo, $targetId, true);
+            if (!empty($result['ok'])) {
+                $message = $result['message'] ?? ('Archived user #' . $targetId . '.');
+            } else {
+                $error = $result['error'] ?? 'Archive failed.';
+            }
+        }
     } elseif ($targetId > 0 && in_array($action, ['approve', 'pending', 'block'], true)) {
         $map = [
             'approve' => 'approved',
@@ -190,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $filter = (string)($_GET['filter'] ?? 'pending');
-if (!in_array($filter, ['pending', 'approved', 'blocked', 'all'], true)) {
+if (!in_array($filter, ['pending', 'approved', 'blocked', 'archived', 'all'], true)) {
     $filter = 'pending';
 }
 
@@ -212,11 +223,12 @@ $counts = [
     'pending' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE access_status = 'pending'")->fetchColumn(),
     'approved' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE access_status = 'approved'")->fetchColumn(),
     'blocked' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE access_status = 'blocked'")->fetchColumn(),
+    'archived' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE access_status = 'archived'")->fetchColumn(),
     'all' => (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn(),
 ];
 
 $rolesList = ['owner', 'manager', 'foh', 'boh', 'admin'];
-$accessList = ['pending', 'approved', 'blocked'];
+$accessList = ['pending', 'approved', 'blocked', 'archived'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -255,6 +267,7 @@ $accessList = ['pending', 'approved', 'blocked'];
         .card.pending { border-color: #F3C5CC; }
         .card.approved { border-color: #B8E6CF; }
         .card.blocked { border-color: #C5D0DE; opacity: 0.9; }
+        .card.archived { border-color: #D4C4A8; opacity: 0.92; }
         .row-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: flex-start; }
         .name { font-size: 1.15rem; margin: 0 0 4px; }
         .meta { font-size: 0.9rem; opacity: 0.75; line-height: 1.45; }
@@ -264,6 +277,7 @@ $accessList = ['pending', 'approved', 'blocked'];
         }
         .badge.ok { background: #E8F8F1; color: #1F6B4A; }
         .badge.bad { background: #EEF2F8; color: #1A2A44; }
+        .badge.arch { background: #F3E8DD; color: #6B4A2A; }
         .badge.warn { background: #FFF4E0; color: #8A5A00; }
         .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
         .actions button, .actions a.btn-link {
@@ -273,6 +287,7 @@ $accessList = ['pending', 'approved', 'blocked'];
         .btn-ok { background: #E55163; color: white; }
         .btn-wait { background: #BBE7DA; color: #6B4A8C; }
         .btn-block { background: #6B4A8C; color: #BBE7DA; }
+        .btn-archive { background: #D4C4A8; color: #3a2f1f; }
         .btn-del { background: #FDECEA; color: #B71C1C; border: 1px solid #F5C2C0; }
         .btn-edit { background: #FFF5F6; color: #E55163; border: 1px solid #F3C5CC; }
         .btn-save { background: #E55163; color: white; }
@@ -308,14 +323,14 @@ $accessList = ['pending', 'approved', 'blocked'];
             <strong>Platform admin only</strong> — edit every login: name, username, email, role, access, and last login.
             <strong>Playground / free accounts:</strong> you may set a password directly.
             <strong>Paying houses &amp; their staff:</strong> use <em>Send password reset</em> (no direct password set).
-            Paid house accounts should be <strong>Owner</strong>. Cancel Stripe separately if you delete a paid owner.
+            Paid house accounts should be <strong>Owner</strong>. Cancel Stripe separately if you delete a paid owner.<br><strong>Archive</strong> soft-locks inactive users (does not delete). They reactivate by resetting their password.
         </div>
 
         <?php if ($message): ?><div class="msg"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
         <?php if ($error): ?><div class="err"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
         <div class="tabs">
-            <?php foreach (['pending' => 'Pending', 'approved' => 'Approved', 'blocked' => 'Blocked', 'all' => 'All'] as $key => $label): ?>
+            <?php foreach (['pending' => 'Pending', 'approved' => 'Approved', 'blocked' => 'Blocked', 'archived' => 'Archived', 'all' => 'All'] as $key => $label): ?>
                 <a class="tab<?php echo $filter === $key ? ' active' : ''; ?>" href="/approve-users?filter=<?php echo $key; ?>">
                     <?php echo $label; ?> (<?php echo (int)$counts[$key]; ?>)
                 </a>
@@ -360,7 +375,9 @@ $accessList = ['pending', 'approved', 'blocked'];
                             </div>
                         </div>
                         <span class="badge<?php
-                            echo $u['access_status'] === 'approved' ? ' ok' : ($u['access_status'] === 'blocked' ? ' bad' : '');
+                            echo $u['access_status'] === 'approved' ? ' ok'
+                                : ($u['access_status'] === 'blocked' ? ' bad'
+                                : ($u['access_status'] === 'archived' ? ' arch' : ''));
                         ?>"><?php echo htmlspecialchars($u['access_status']); ?></span>
                     </div>
                     <form method="POST" class="actions">
@@ -373,6 +390,12 @@ $accessList = ['pending', 'approved', 'blocked'];
                         <?php endif; ?>
                         <?php if ($u['access_status'] !== 'blocked'): ?>
                             <button class="btn-block" type="submit" name="action" value="block">Block</button>
+                        <?php endif; ?>
+                        <?php if ($u['access_status'] !== 'archived' && !$isSelf && !$isPlatAdmin): ?>
+                            <button class="btn-archive" type="submit" name="action" value="archive"
+                                onclick="return confirm('Archive <?php echo htmlspecialchars(addslashes($u['email'] ?: $u['username']), ENT_QUOTES); ?>? They can’t log in with the old password — they must reset password to reactivate.');">
+                                Archive
+                            </button>
                         <?php endif; ?>
                         <button class="btn-edit" type="submit" name="action" value="send_reset"
                             onclick="return confirm('Email a password reset link to <?php echo htmlspecialchars(addslashes((string)$u['email']), ENT_QUOTES); ?>?');">

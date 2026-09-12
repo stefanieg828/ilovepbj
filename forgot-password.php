@@ -6,7 +6,8 @@ if (defined('AUTH_BYPASS') && AUTH_BYPASS) {
     exit();
 }
 
-if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0) {
+// Archived users need this page to reactivate — don't bounce them to waiting
+if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0 && pbj_user_is_approved()) {
     pbj_post_auth_redirect($pdo);
 }
 

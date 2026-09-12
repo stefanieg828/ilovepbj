@@ -69,7 +69,7 @@ if (function_exists('pbj_capture_sales_ref_from_request')) {
     pbj_capture_sales_ref_from_request();
 }
 
-/** Ensure users.access_status exists (pending | approved | blocked). */
+/** Ensure users.access_status exists (pending | approved | blocked | archived). */
 function pbj_ensure_access_column(PDO $pdo): void {
     static $done = false;
     if ($done) {
@@ -77,13 +77,20 @@ function pbj_ensure_access_column(PDO $pdo): void {
     }
     $done = true;
     try {
-        $cols = $pdo->query("SHOW COLUMNS FROM users LIKE 'access_status'")->fetch();
+        $cols = $pdo->query("SHOW COLUMNS FROM users LIKE 'access_status'")->fetch(PDO::FETCH_ASSOC);
+        $enumSql = "ENUM('pending','approved','blocked','archived') NOT NULL DEFAULT 'pending'";
         if (!$cols) {
             $pdo->exec(
-                "ALTER TABLE users ADD COLUMN access_status ENUM('pending','approved','blocked') NOT NULL DEFAULT 'pending' AFTER role"
+                "ALTER TABLE users ADD COLUMN access_status {$enumSql} AFTER role"
             );
             // Existing accounts were already in use — keep them approved
             $pdo->exec("UPDATE users SET access_status = 'approved'");
+        } else {
+            // Safely extend ENUM when upgrading older DBs (MySQL/MariaDB)
+            $type = (string) ($cols['Type'] ?? $cols['type'] ?? '');
+            if ($type !== '' && stripos($type, 'archived') === false) {
+                $pdo->exec("ALTER TABLE users MODIFY COLUMN access_status {$enumSql}");
+            }
         }
     } catch (Exception $e) {
         // Table may not exist in odd envs — ignore; inserts will surface errors
@@ -312,7 +319,7 @@ function pbj_should_auto_approve(string $email): bool {
     return in_array($email, pbj_email_list('ACCESS_AUTO_APPROVE_EMAILS'), true);
 }
 
-/** pending | approved | blocked — defaults pending for safety */
+/** pending | approved | blocked | archived — defaults pending for safety */
 function pbj_access_status_for_new_user(string $email): string {
     return pbj_should_auto_approve($email) ? 'approved' : 'pending';
 }
@@ -406,6 +413,10 @@ function pbj_enforce_access_gate(): void {
 
     if (!pbj_user_is_approved()) {
         $status = $_SESSION['access_status'] ?? 'pending';
+        if ($status === 'archived') {
+            header('Location: /waiting?archived=1');
+            exit();
+        }
         if ($status === 'blocked') {
             header('Location: /waiting?blocked=1');
             exit();
@@ -4916,6 +4927,66 @@ function pbj_user_allows_direct_password_set(PDO $pdo, int $userId): bool {
     return !pbj_user_is_on_paying_house($pdo, $userId);
 }
 
+
+/**
+ * Archive an inactive user (soft lock — not delete).
+ * Sets access_status=archived and replaces the password with an unusable hash
+ * so the old password cannot log in; they must use forgot/reset password to reactivate.
+ * @return array{ok:bool,message?:string,error?:string}
+ */
+function pbj_admin_archive_user(PDO $pdo, int $userId, bool $invalidatePassword = true): array {
+    if ($userId <= 0) {
+        return ['ok' => false, 'error' => 'Invalid user.'];
+    }
+    try {
+        $stmt = $pdo->prepare('SELECT id, username, email, access_status FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user) {
+            return ['ok' => false, 'error' => 'User not found.'];
+        }
+        $email = strtolower(trim((string) ($user['email'] ?? '')));
+        if ($email !== '' && function_exists('pbj_is_platform_admin') && pbj_is_platform_admin($email)) {
+            return ['ok' => false, 'error' => 'Platform admin accounts can’t be archived here.'];
+        }
+        if ($invalidatePassword) {
+            // Random unusable hash — password_verify will never succeed against a real password
+            $deadHash = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+            $pdo->prepare(
+                "UPDATE users SET access_status = 'archived', password = ?,
+                 password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?"
+            )->execute([$deadHash, $userId]);
+        } else {
+            $pdo->prepare("UPDATE users SET access_status = 'archived' WHERE id = ?")->execute([$userId]);
+        }
+        $label = $user['email'] ?: $user['username'];
+        return [
+            'ok' => true,
+            'message' => 'Archived ' . $label . '. They can’t use the app until they reset their password (that reactivates them as approved).',
+        ];
+    } catch (Throwable $e) {
+        error_log('pbj_admin_archive_user: ' . $e->getMessage());
+        return ['ok' => false, 'error' => 'Could not archive user.'];
+    }
+}
+
+
+/**
+ * After a successful password reset: archived users become approved again.
+ */
+function pbj_reactivate_user_after_password_reset(PDO $pdo, int $userId): void {
+    if ($userId <= 0) {
+        return;
+    }
+    try {
+        $pdo->prepare(
+            "UPDATE users SET access_status = 'approved' WHERE id = ? AND access_status = 'archived'"
+        )->execute([$userId]);
+    } catch (Throwable $e) {
+        error_log('pbj_reactivate_user_after_password_reset: ' . $e->getMessage());
+    }
+}
+
 /**
  * Email a password-reset link (admin-triggered).
  * @return array{ok:bool,message?:string,error?:string,link?:string}
@@ -5019,7 +5090,7 @@ function pbj_owner_save_employee_profile(PDO $pdo, int $restaurantId, int $targe
         $role = 'admin';
     }
     $allowedRoles = ['owner', 'manager', 'foh', 'boh', 'admin'];
-    $allowedAccess = ['pending', 'approved', 'blocked'];
+    $allowedAccess = ['pending', 'approved', 'blocked', 'archived'];
 
     if ($fullName === '' || $username === '' || $newEmail === '') {
         return ['ok' => false, 'error' => 'Name, username, and email are required.'];
@@ -5035,8 +5106,8 @@ function pbj_owner_save_employee_profile(PDO $pdo, int $restaurantId, int $targe
     }
     if ($ownerId > 0 && $targetId === $ownerId) {
         $role = 'owner';
-        if ($access === 'blocked') {
-            return ['ok' => false, 'error' => 'Cannot block the house owner.'];
+        if (in_array($access, ['blocked', 'archived'], true)) {
+            return ['ok' => false, 'error' => 'Cannot block or archive the house owner.'];
         }
         $access = 'approved';
     }
@@ -5088,7 +5159,7 @@ function pbj_admin_save_user_profile(PDO $pdo, int $targetId, array $fields): ar
         $role = 'admin';
     }
     $allowedRoles = ['owner', 'manager', 'foh', 'boh', 'admin'];
-    $allowedAccess = ['pending', 'approved', 'blocked'];
+    $allowedAccess = ['pending', 'approved', 'blocked', 'archived'];
 
     if ($fullName === '' || $username === '' || $newEmail === '') {
         return ['ok' => false, 'error' => 'Name, username, and email are required.'];
@@ -5131,6 +5202,16 @@ function pbj_admin_save_user_profile(PDO $pdo, int $targetId, array $fields): ar
             );
             $upd->execute([$fullName, $username, $newEmail, $role, $access, $hash, $targetId]);
             return ['ok' => true, 'message' => 'Updated profile and set a new password.'];
+        }
+        // Archiving via profile save: invalidate old password so they must reset to reactivate
+        if ($access === 'archived' && ($existing['access_status'] ?? '') !== 'archived') {
+            $deadHash = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+            $upd = $pdo->prepare(
+                'UPDATE users SET full_name = ?, username = ?, email = ?, role = ?, access_status = ?,
+                 password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?'
+            );
+            $upd->execute([$fullName, $username, $newEmail, $role, $access, $deadHash, $targetId]);
+            return ['ok' => true, 'message' => 'Updated profile and archived ' . $username . ' (password cleared — they must reset to reactivate).'];
         }
         $upd = $pdo->prepare(
             'UPDATE users SET full_name = ?, username = ?, email = ?, role = ?, access_status = ? WHERE id = ?'
@@ -5214,12 +5295,12 @@ function pbj_update_restaurant_member(PDO $pdo, int $restaurantId, int $userId, 
 
         if (array_key_exists('access_status', $patch)) {
             $st = strtolower(trim((string) $patch['access_status']));
-            if (!in_array($st, ['pending', 'approved', 'blocked'], true)) {
+            if (!in_array($st, ['pending', 'approved', 'blocked', 'archived'], true)) {
                 return ['ok' => false, 'error' => 'Invalid access status.'];
             }
-            // Don't block the account owner of the house
-            if ($ownerId > 0 && $userId === $ownerId && $st === 'blocked') {
-                return ['ok' => false, 'error' => 'Cannot block the house owner.'];
+            // Don't block/archive the account owner of the house
+            if ($ownerId > 0 && $userId === $ownerId && in_array($st, ['blocked', 'archived'], true)) {
+                return ['ok' => false, 'error' => 'Cannot block or archive the house owner.'];
             }
             $pdo->prepare('UPDATE users SET access_status = ? WHERE id = ?')->execute([$st, $userId]);
         }
@@ -5267,6 +5348,10 @@ function pbj_post_auth_redirect(PDO $pdo, string $afterTheme = '/home'): void {
     }
     if ($uid > 0 && !pbj_user_is_approved()) {
         $st = $_SESSION['access_status'] ?? 'pending';
+        if ($st === 'archived') {
+            header('Location: /waiting?archived=1');
+            exit();
+        }
         header('Location: /waiting' . ($st === 'blocked' ? '?blocked=1' : ''));
         exit();
     }

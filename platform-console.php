@@ -405,6 +405,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $editUserId = $uid;
         $tab = (string) ($_POST['return_tab'] ?? 'users');
+    } elseif ($action === 'user_archive') {
+        $uid = (int) ($_POST['user_id'] ?? 0);
+        if (!function_exists('pbj_admin_archive_user')) {
+            $error = 'Archive helper missing.';
+        } else {
+            $res = pbj_admin_archive_user($pdo, $uid, true);
+            if (!empty($res['ok'])) {
+                $message = $res['message'] ?? 'Archived.';
+            } else {
+                $error = $res['error'] ?? 'Archive failed.';
+            }
+        }
+        $tab = (string) ($_POST['return_tab'] ?? 'users');
+        if (!in_array($tab, ['restaurants', 'users', 'individuals', 'sales'], true)) {
+            $tab = 'users';
+        }
+
     } elseif ($action === 'sales_rep_save' && function_exists('pbj_sales_rep_save')) {
         $repId = (int) ($_POST['rep_id'] ?? 0);
         $res = pbj_sales_rep_save($pdo, [
@@ -538,7 +555,7 @@ $billingOptions = [
 ];
 // Must match users.role ENUM in MySQL
 $roleOptions = ['owner', 'manager', 'foh', 'boh', 'admin'];
-$accessOptions = ['approved', 'pending', 'blocked'];
+$accessOptions = ['approved', 'pending', 'blocked', 'archived'];
 
 $salesReport = function_exists('pbj_sales_commission_report')
     ? pbj_sales_commission_report($pdo)
@@ -1331,7 +1348,7 @@ $mutedCard = $isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)';
                 <h3>
                     <?php echo h($u['full_name'] ?: $u['username']); ?>
                     <span class="badge">#<?php echo $uid; ?></span>
-                    <span class="badge"><?php echo h($u['access_status']); ?></span>
+                    <span class="badge<?php echo ($u['access_status'] ?? '') === 'archived' ? ' free' : (($u['access_status'] ?? '') === 'approved' ? ' ok' : ''); ?>"><?php echo h($u['access_status']); ?></span>
                     <?php if ($isPlat): ?><span class="badge free">platform admin</span><?php endif; ?>
                 </h3>
                 <div class="meta">
@@ -1355,6 +1372,14 @@ $mutedCard = $isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)';
                         <input type="hidden" name="return_tab" value="<?php echo h($tab); ?>">
                         <button class="btn btn-mint" type="submit">Password reset</button>
                     </form>
+                    <?php if (!$isSelf && !$isPlat && ($u['access_status'] ?? '') !== 'archived'): ?>
+                    <form method="POST" style="display:inline;" onsubmit="return confirm('Archive this user? Old password will stop working — they must reset password to reactivate.');">
+                        <input type="hidden" name="action" value="user_archive">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="return_tab" value="<?php echo h($tab); ?>">
+                        <button class="btn btn-ghost" type="submit">Archive</button>
+                    </form>
+                    <?php endif; ?>
                     <?php if (!$isSelf && !$isPlat): ?>
                     <form method="POST" style="display:inline;" onsubmit="return confirm('Permanently DELETE this user?');">
                         <input type="hidden" name="action" value="user_delete">

@@ -6,7 +6,8 @@ if (defined('AUTH_BYPASS') && AUTH_BYPASS) {
     exit();
 }
 
-if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0) {
+// Allow archived/unapproved users to finish reset without bouncing to waiting
+if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0 && pbj_user_is_approved()) {
     pbj_post_auth_redirect($pdo);
 }
 
@@ -18,7 +19,7 @@ if ($token === '' || !preg_match('/^[a-f0-9]{64}$/', $token)) {
     $error = 'This reset link is missing or invalid. Request a new one from the login page.';
 } else {
     $stmt = $pdo->prepare(
-        'SELECT id, username, email, password_reset_expires FROM users
+        'SELECT id, username, email, access_status, password_reset_expires FROM users
          WHERE password_reset_token = ? LIMIT 1'
     );
     $stmt->execute([$token]);
@@ -47,6 +48,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user && $error === '') {
             'UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?'
         );
         $upd->execute([$hash, (int) $user['id']]);
+        // Archived users reactivate (approved) after choosing a new password
+        if (function_exists('pbj_reactivate_user_after_password_reset')) {
+            pbj_reactivate_user_after_password_reset($pdo, (int) $user['id']);
+        } else {
+            $prev = strtolower(trim((string) ($user['access_status'] ?? '')));
+            if ($prev === 'archived') {
+                $pdo->prepare("UPDATE users SET access_status = 'approved' WHERE id = ?")->execute([(int) $user['id']]);
+            }
+        }
         header('Location: /login?reset=1');
         exit();
     }
