@@ -2345,6 +2345,7 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
             ['id' => 'tools', 'group' => 'boh', 'href' => '/BOH/tools', 'label' => 'Quick Tools', 'slot' => 'the-heat/quick-tools', 'emoji' => '🛠️'],
             ['id' => '86-board', 'group' => 'boh', 'href' => '/BOH/86', 'label' => '86 Board', 'slot' => 'recipes-hub/86-board', 'emoji' => '🚫'],
             ['id' => '86-display', 'group' => 'boh', 'href' => '/BOH/86/display', 'label' => '86 Kitchen Display', 'slot' => 'recipes-hub/86-display', 'emoji' => '📺'],
+            ['id' => 'allergens', 'group' => 'boh', 'href' => '/BOH/allergens', 'label' => 'Allergen Menu', 'slot' => 'recipes-hub/allergen-menu', 'emoji' => '⚠️'],
             ['id' => 'foh-open', 'group' => 'foh', 'href' => '/FOH/opening-closing', 'label' => 'FOH Open / Close', 'slot' => 'showtime/opening-closing', 'emoji' => '🔑'],
             ['id' => 'sidework', 'group' => 'foh', 'href' => '/FOH/sidework', 'label' => 'Server Sidework', 'slot' => 'showtime/server-sidework', 'emoji' => '🧹'],
             ['id' => 'floor', 'group' => 'foh', 'href' => '/FOH/floor-plan', 'label' => 'Floor Plan', 'slot' => 'showtime/floor-plan', 'emoji' => '🪑'],

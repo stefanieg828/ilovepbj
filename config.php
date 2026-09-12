@@ -2083,6 +2083,7 @@ function pbj_page_routes(): array {
         'the-heat-yields.php' => '/BOH/yields',
         'the-heat-86.php' => '/BOH/86',
         'the-heat-86-display.php' => '/BOH/86/display',
+        'the-heat-allergens.php' => '/BOH/allergens',
         // Settings cards
         'whiskings-theme.php' => '/settings/theme',
         'whiskings-profile.php' => '/settings/profile',
