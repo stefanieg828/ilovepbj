@@ -12,16 +12,20 @@ $joined = !empty($_GET['joined']);
 $created = !empty($_GET['created']);
 
 // Invite joiners who landed here stuck as "pending": approve if they're on a house
+// Do NOT auto-approve archived or blocked accounts
 if ($uid > 0 && !pbj_user_is_approved()) {
-    try {
-        $onHouse = $pdo->prepare('SELECT restaurant_id FROM user_restaurant WHERE user_id = ? LIMIT 1');
-        $onHouse->execute([$uid]);
-        if ($onHouse->fetchColumn()) {
-            pbj_approve_invite_joiner($pdo, $uid);
-            $_SESSION['access_status'] = 'approved';
+    $gateStatus = $_SESSION['access_status'] ?? 'pending';
+    if (!in_array($gateStatus, ['archived', 'blocked'], true)) {
+        try {
+            $onHouse = $pdo->prepare('SELECT restaurant_id FROM user_restaurant WHERE user_id = ? LIMIT 1');
+            $onHouse->execute([$uid]);
+            if ($onHouse->fetchColumn()) {
+                pbj_approve_invite_joiner($pdo, $uid);
+                $_SESSION['access_status'] = 'approved';
+            }
+        } catch (Throwable $e) {
+            // ignore
         }
-    } catch (Throwable $e) {
-        // ignore
     }
 }
 
@@ -31,6 +35,7 @@ if (pbj_user_is_approved()) {
 }
 
 $blocked = !empty($_GET['blocked']) || (($_SESSION['access_status'] ?? '') === 'blocked');
+$archived = !empty($_GET['archived']) || (($_SESSION['access_status'] ?? '') === 'archived');
 $pay = (string) ($_GET['pay'] ?? '');
 $code = $_SESSION['pending_invite_code'] ?? '';
 $name = $_SESSION['user_name'] ?? $_SESSION['username'] ?? 'friend';
@@ -45,7 +50,7 @@ $stripeReady = function_exists('stripe_is_configured') && stripe_is_configured()
 $trialExpired = ($pay === 'trial_expired') || !empty($trialInfo['expired']);
 $trialActive = !empty($trialInfo['active']);
 // House starters / trial converts pay — invite-code joiners never see Checkout
-$canPay = $stripeReady && !$joined && !$blocked && ($trialExpired || $trialActive || $pay === 'needed' || $created || $pay !== '');
+$canPay = $stripeReady && !$joined && !$blocked && !$archived && ($trialExpired || $trialActive || $pay === 'needed' || $created || $pay !== '');
 if ($joined && !$trialExpired) {
     $canPay = false;
 }
@@ -55,7 +60,7 @@ if ($joined && !$trialExpired) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $blocked ? 'Access paused' : 'Almost there'; ?> · ilovepbj ops</title>
+    <title><?php echo $archived ? 'Account archived' : ($blocked ? 'Access paused' : 'Almost there'); ?> · ilovepbj ops</title>
     <?php if (function_exists('pbj_render_favicon_links')) { pbj_render_favicon_links(); } ?>
     <style>
         @font-face { font-family: 'DreamingOutLoudPro'; src: url('/Fonts/dreaming-outloud-pro-regular.otf') format('opentype'); }
@@ -107,8 +112,14 @@ if ($joined && !$trialExpired) {
         <h1>ilovepbj ops</h1>
     </div>
     <div class="wrap">
-        <div class="card<?php echo $blocked ? ' blocked' : ''; ?>">
-            <?php if ($blocked): ?>
+        <div class="card<?php echo ($blocked || $archived) ? ' blocked' : ''; ?>">
+            <?php if ($archived): ?>
+                <h2>Account archived</h2>
+                <p>Hey <?php echo htmlspecialchars($name); ?> — this account is archived and can’t use the ops hub right now.</p>
+                <p><strong>Reset your password to reactivate.</strong> After you choose a new password, your account becomes approved again and you can log in normally.</p>
+                <a class="btn btn-primary" href="/forgot-password">Forgot password / reactivate →</a>
+                <p style="font-size:0.95rem;opacity:0.75;margin-top:12px;">If you didn’t expect this, contact your house owner or <strong>nutsaboutpbj@ilovepbj.shop</strong>.</p>
+            <?php elseif ($blocked): ?>
                 <h2>Access paused</h2>
                 <p>Hey <?php echo htmlspecialchars($name); ?> — this account isn’t cleared for the ops hub right now.</p>
                 <p>If you think that’s a mistake, reach out to the person who invited you (or the house that runs ilovepbj ops).</p>

@@ -41,7 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!isset($user['access_status'])) {
                 $user['access_status'] = 'pending';
             }
-            // Platform admins always approved
+            // Platform admins always approved.
+            // Do NOT auto-approve archived (or other) accounts on login — archived users
+            // reactivate only via password reset → approved.
             if (pbj_is_platform_admin($user['email'] ?? '')) {
                 if (($user['access_status'] ?? '') !== 'approved') {
                     $pdo->prepare("UPDATE users SET access_status = 'approved' WHERE id = ?")->execute([(int)$user['id']]);
@@ -56,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             pbj_set_session_user($user);
             // Join with house invite code — staff never hit the pay wall
             $code = strtoupper(trim((string)($_POST['join_code'] ?? $_GET['code'] ?? '')));
-            if ($code !== '') {
+            if ($code !== '' && ($user['access_status'] ?? '') !== 'archived') {
                 $house = pbj_find_restaurant_by_code($pdo, $code);
                 if ($house) {
                     try {
