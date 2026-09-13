@@ -2352,6 +2352,7 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
             ['id' => 'reservations', 'group' => 'foh', 'href' => '/FOH/reservations', 'label' => 'Res / Wait / To-Gos', 'slot' => 'showtime/reservations', 'emoji' => '📅'],
             ['id' => 'pos', 'group' => 'foh', 'href' => '/FOH/pos', 'label' => 'POS Reference', 'slot' => 'showtime/pos', 'emoji' => '🖥️'],
             ['id' => 'bar', 'group' => 'foh', 'href' => '/FOH/bar', 'label' => 'Bar Ops', 'slot' => 'showtime/bar-guest-service', 'emoji' => '🍸'],
+            ['id' => 'my-schedule', 'group' => 'foh', 'href' => '/schedule', 'label' => 'My Schedule', 'slot' => 'sandwich-hq/schedules', 'emoji' => '🗓️'],
             ['id' => 'schedules', 'group' => 'admin', 'href' => '/admin/schedules', 'label' => 'Schedules', 'slot' => 'sandwich-hq/schedules', 'emoji' => '🗓️'],
             ['id' => 'team', 'group' => 'admin', 'href' => '/admin/team', 'label' => 'Team & Roles', 'slot' => 'sandwich-hq/team', 'emoji' => '👥'],
             ['id' => 'inventory', 'group' => 'admin', 'href' => '/admin/inventory', 'label' => 'Inventory', 'slot' => 'sandwich-hq/inventory', 'emoji' => '📦'],

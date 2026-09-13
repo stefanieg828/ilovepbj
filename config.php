@@ -2118,6 +2118,7 @@ function pbj_page_routes(): array {
         'admin-team.php' => '/admin/team',
         'admin-ops.php' => '/admin/ops',
         'admin-schedules.php' => '/admin/schedules',
+        'my-schedule.php' => '/schedule',
         'admin-reports.php' => '/admin/reports',
         'admin-inventory-vendors.php' => '/admin/inventory',
         'admin-compliance.php' => '/admin/compliance',
