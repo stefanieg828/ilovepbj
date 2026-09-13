@@ -37,6 +37,7 @@ function pbj_prefs_allowed_shortcut_ids(): array {
         'foh-open', 'sidework', 'floor', 'reservations', 'pos', 'bar',
         'schedules', 'team', 'inventory', 'reports', 'compliance', 'ops',
         'announcements', 'shift-notes', 'dms', 'broadcasts',
+        '86-board', '86-display', 'allergens', 'my-schedule',
     ];
 }
 
@@ -111,6 +112,32 @@ function pbj_prefs_normalize_home_tiles($raw): ?array {
 }
 
 /**
+ * Normalize schedule_me_id: { id: string, updatedAt: int }
+ *
+ * @param mixed $raw
+ * @return array{id: string, updatedAt: int}|null
+ */
+function pbj_prefs_normalize_schedule_me($raw): ?array {
+    $id = '';
+    $updatedAt = 0;
+    if (is_string($raw) || is_int($raw)) {
+        $id = trim((string) $raw);
+    } elseif (is_array($raw)) {
+        $id = trim((string) ($raw['id'] ?? $raw['personId'] ?? ''));
+        $updatedAt = (int) ($raw['updatedAt'] ?? $raw['updated_at'] ?? 0);
+    } else {
+        return null;
+    }
+    if (strlen($id) > 80) {
+        $id = substr($id, 0, 80);
+    }
+    if ($updatedAt < 0) {
+        $updatedAt = 0;
+    }
+    return ['id' => $id, 'updatedAt' => $updatedAt];
+}
+
+/**
  * Normalize home_shortcuts blob: { ids: string[], updatedAt: int }
  *
  * @param mixed $raw
@@ -173,6 +200,12 @@ try {
             $ht = pbj_prefs_normalize_home_tiles($prefs['home_tiles']);
             if ($ht !== null) {
                 $out['prefs']['home_tiles'] = $ht;
+            }
+        }
+        if (isset($prefs['schedule_me_id'])) {
+            $me = pbj_prefs_normalize_schedule_me($prefs['schedule_me_id']);
+            if ($me !== null) {
+                $out['prefs']['schedule_me_id'] = $me;
             }
         }
 
@@ -246,6 +279,32 @@ try {
             }
         }
 
+        if (array_key_exists('schedule_me_id', $body)) {
+            $incoming = pbj_prefs_normalize_schedule_me($body['schedule_me_id']);
+            if ($incoming === null) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'bad_schedule_me_id']);
+                exit;
+            }
+            $existing = isset($current['schedule_me_id'])
+                ? pbj_prefs_normalize_schedule_me($current['schedule_me_id'])
+                : null;
+            if (
+                $existing
+                && $existing['updatedAt'] > 0
+                && $incoming['updatedAt'] > 0
+                && $existing['updatedAt'] > $incoming['updatedAt']
+            ) {
+                $outPrefs['schedule_me_id'] = $existing;
+                $conflictKept = 'server';
+            } else {
+                if ($incoming['updatedAt'] <= 0) {
+                    $incoming['updatedAt'] = (int) round(microtime(true) * 1000);
+                }
+                $patch['schedule_me_id'] = $incoming;
+            }
+        }
+
         if (!$patch && !$outPrefs) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'empty_patch']);
@@ -263,6 +322,12 @@ try {
             $ht = pbj_prefs_normalize_home_tiles($saved['home_tiles']);
             if ($ht !== null) {
                 $outPrefs['home_tiles'] = $ht;
+            }
+        }
+        if (isset($saved['schedule_me_id']) && !isset($outPrefs['schedule_me_id'])) {
+            $me = pbj_prefs_normalize_schedule_me($saved['schedule_me_id']);
+            if ($me !== null) {
+                $outPrefs['schedule_me_id'] = $me;
             }
         }
 
