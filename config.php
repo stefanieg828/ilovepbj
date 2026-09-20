@@ -2104,6 +2104,7 @@ function pbj_page_routes(): array {
         'refunds.php' => '/refunds',
         'approve-users.php' => '/approve-users',
         'index.php' => '/',
+        'food-cost-calculator.php' => '/food-cost-calculator',
         // Messages (Jelly) children
         'jelly-announcements.php' => '/messages/announcements',
         'jelly-broadcasts.php' => '/messages/broadcasts',
