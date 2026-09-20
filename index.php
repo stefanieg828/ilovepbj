@@ -315,6 +315,20 @@ $plans = pbj_plans();
             border: 2px solid var(--mint); box-shadow: none;
         }
         .code-band .btn-ghost:hover { background: rgba(187, 231, 218, 0.15); color: white; }
+        .demo-code-chip {
+            display: inline-block;
+            background: rgba(187, 231, 218, 0.2);
+            border: 2px dashed var(--mint);
+            color: var(--mint);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1.35rem;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 14px;
+            margin: 0 0 16px;
+        }
+        .demo-band-note { font-size: 0.95rem; opacity: 0.88; margin: -6px 0 14px; color: white; }
         .footer {
             text-align: center; padding: 28px 16px 40px; font-size: 0.95rem;
             background: var(--purple); color: var(--mint);
@@ -334,10 +348,11 @@ $plans = pbj_plans();
         <a class="nav-brand" href="/">ilovepbj ops</a>
         <div class="nav-actions">
             <a class="nav-link" href="#how">How it works</a>
+            <a class="nav-link" href="/food-cost-calculator">Food cost</a>
             <a class="nav-link" href="#plans">Plans</a>
             <a class="nav-link" href="/join">I have a code</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
-            <a class="btn btn-mint btn-sm" href="/register?mode=playground">Try playground</a>
+            <a class="btn btn-mint btn-sm" href="/register?mode=playground">FREE DEMO</a>
         </div>
     </nav>
 
@@ -348,12 +363,25 @@ $plans = pbj_plans();
             built for real restaurants, not spreadsheets that melt at 5&nbsp;p.m.
         </p>
         <div class="hero-ctas">
-            <a class="btn btn-primary" href="/register?mode=playground">Try the playground</a>
+            <a class="btn btn-primary" href="/register?mode=playground">Enter free demo</a>
             <a class="btn btn-purple" href="/register?plan=crew_10">Start 14-day free trial</a>
             <a class="btn btn-ghost" href="/join">Join with a code</a>
         </div>
-        <p class="hero-sub">Playground = username + email + password · no card · convert to a real house anytime</p>
+        <p class="hero-sub">FREE DEMO = username + email + password · no card · peek without a paid trial · convert anytime</p>
     </header>
+
+    <section class="section" id="free-demo">
+        <div class="code-band">
+            <h2>FREE DEMO</h2>
+            <p>Peek the full kitchen without starting a paid trial. Username, email, and password — no card. Resets nightly so you can explore safely.</p>
+            <p class="demo-band-note">Public invite code</p>
+            <div class="demo-code-chip" aria-label="Free demo invite code">FREE-DEMO</div>
+            <div class="code-actions">
+                <a class="btn btn-primary" href="/register?mode=playground">Enter free demo</a>
+                <a class="btn btn-ghost" href="/join">I have a house code</a>
+            </div>
+        </div>
+    </section>
 
     <div class="band-mint">
     <section class="section" id="how">
@@ -393,6 +421,18 @@ $plans = pbj_plans();
         </div>
     </section>
     </div>
+
+
+    <section class="section" id="food-cost">
+        <div class="code-band" style="margin-top: 8px;">
+            <h2>Food cost calculator</h2>
+            <p>Recipe → plate cost → food cost % → suggested menu price. See your plate cost in minutes.</p>
+            <div class="code-actions">
+                <a class="btn btn-primary" href="/food-cost-calculator">See plate cost tools</a>
+                <a class="btn btn-ghost" href="/register?mode=playground">Enter FREE DEMO</a>
+            </div>
+        </div>
+    </section>
 
     <div class="band-purple">
     <section class="section plans-section" id="plans">
@@ -515,7 +555,7 @@ $plans = pbj_plans();
 
     <footer class="footer">
         <p>ilovepbj ops · restaurant ops with heart</p>
-        <p><a href="/login">Log in</a> · <a href="/register?mode=playground">Try playground</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a></p>
+        <p><a href="/login">Log in</a> · <a href="/register?mode=playground">FREE DEMO</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a> · <a href="/food-cost-calculator">Food cost calculator</a></p>
         <p>
             <a href="/privacy">Privacy</a> ·
             <a href="/terms">Terms</a> ·
