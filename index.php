@@ -334,6 +334,7 @@ $plans = pbj_plans();
         <a class="nav-brand" href="/">ilovepbj ops</a>
         <div class="nav-actions">
             <a class="nav-link" href="#how">How it works</a>
+            <a class="nav-link" href="/food-cost-calculator">Food cost</a>
             <a class="nav-link" href="#plans">Plans</a>
             <a class="nav-link" href="/join">I have a code</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
@@ -393,6 +394,18 @@ $plans = pbj_plans();
         </div>
     </section>
     </div>
+
+
+    <section class="section" id="food-cost">
+        <div class="code-band" style="margin-top: 8px;">
+            <h2>Food cost calculator</h2>
+            <p>Recipe → plate cost → food cost % → suggested menu price. See your plate cost in minutes.</p>
+            <div class="code-actions">
+                <a class="btn btn-primary" href="/food-cost-calculator">See plate cost tools</a>
+                <a class="btn btn-ghost" href="/register?mode=playground">Try free playground</a>
+            </div>
+        </div>
+    </section>
 
     <div class="band-purple">
     <section class="section plans-section" id="plans">
@@ -515,7 +528,7 @@ $plans = pbj_plans();
 
     <footer class="footer">
         <p>ilovepbj ops · restaurant ops with heart</p>
-        <p><a href="/login">Log in</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a></p>
+        <p><a href="/login">Log in</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a> · <a href="/food-cost-calculator">Food cost calculator</a></p>
         <p>
             <a href="/privacy">Privacy</a> ·
             <a href="/terms">Terms</a> ·
