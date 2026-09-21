@@ -2120,6 +2120,7 @@ function pbj_page_routes(): array {
         'approve-users.php' => '/approve-users',
         'index.php' => '/',
         'food-cost-calculator.php' => '/food-cost-calculator',
+        'checklists.php' => '/checklists',
         // Messages (Jelly) children
         'jelly-announcements.php' => '/messages/announcements',
         'jelly-broadcasts.php' => '/messages/broadcasts',
