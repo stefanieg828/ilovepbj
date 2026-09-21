@@ -20,19 +20,19 @@ $plans = pbj_plans();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ilovepbj ops — Restaurant operations that stick</title>
-    <meta name="description" content="Restaurant checklist and food cost app for independent restaurants. ilovepbj ops is a restaurant operations hub for FOH, BOH, team, messages, and day-to-day kitchen &amp; floor tools — sized for individuals and crews, with heart.">
+    <meta name="description" content="Checklists and food costing for independent restaurants. ilovepbj ops is a restaurant operations hub for FOH, BOH, team, messages, and day-to-day kitchen &amp; floor tools — sized for individuals and crews, with heart.">
     <link rel="canonical" href="https://ilovepbj.shop/">
     <meta name="robots" content="index, follow">
     <?php if (function_exists('pbj_render_favicon_links')) { pbj_render_favicon_links(); } ?>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ilovepbj ops">
     <meta property="og:title" content="ilovepbj ops — Restaurant operations that stick">
-    <meta property="og:description" content="Restaurant checklist and food cost app for independent restaurants. FOH, BOH, team, and messages in one ops hub — pick a plan, create your house, and run the shift with heart.">
+    <meta property="og:description" content="Checklists and food costing for independent restaurants. FOH, BOH, team, and messages in one ops hub — pick a plan, create your house, and run the shift with heart.">
     <meta property="og:url" content="https://ilovepbj.shop/">
     <meta property="og:image" content="https://ilovepbj.shop/icon-512.png?v=3">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="ilovepbj ops — Restaurant operations that stick">
-    <meta name="twitter:description" content="Restaurant checklist and food cost app for independent restaurants.">
+    <meta name="twitter:description" content="Checklists and food costing for independent restaurants — with a little jelly.">
     <meta name="twitter:image" content="https://ilovepbj.shop/icon-512.png?v=3">
     <script type="application/ld+json">
     {
@@ -42,7 +42,7 @@ $plans = pbj_plans();
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
       "url": "https://ilovepbj.shop/",
-      "description": "Restaurant checklist and food cost app for independent restaurants. Operations hub for FOH, BOH, team, messages, and day-to-day tools.",
+      "description": "Checklists and food costing for independent restaurants. Operations hub for FOH, BOH, team, messages, and day-to-day tools.",
       "offers": {
         "@type": "AggregateOffer",
         "priceCurrency": "USD",
@@ -366,7 +366,7 @@ $plans = pbj_plans();
 
     <header class="hero">
         <h1>Ops that stick like jelly</h1>
-        <p class="seo-lead">Restaurant checklist and food cost app for independent restaurants.</p>
+        <p class="seo-lead">Checklists and food costing that actually stick — built for independent restaurants.</p>
         <p class="tagline">
             One cute hub for FOH, BOH, team chat, schedules, sales &amp; recipes —
             built for real restaurants, not spreadsheets that melt at 5&nbsp;p.m.
