@@ -1,6 +1,9 @@
 <?php
 require_once 'config.php';
 require_once __DIR__ . '/stripe-config.php';
+if (is_readable(__DIR__ . '/sales-playground.inc.php')) {
+    require_once __DIR__ . '/sales-playground.inc.php';
+}
 
 if (defined('AUTH_BYPASS') && AUTH_BYPASS) {
     header('Location: /home');
@@ -11,7 +14,8 @@ if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0) {
     pbj_post_auth_redirect($pdo);
 }
 
-$mode = ($_GET['mode'] ?? $_POST['mode'] ?? 'start') === 'join' ? 'join' : 'start';
+$rawMode = (string) ($_GET['mode'] ?? $_POST['mode'] ?? 'start');
+$mode = in_array($rawMode, ['join', 'playground'], true) ? $rawMode : 'start';
 $planId = (string)($_GET['plan'] ?? $_POST['plan'] ?? pbj_default_plan_id());
 $resolved = pbj_plan_by_id($planId);
 if (!$resolved || !empty($resolved['coming'])) {
@@ -30,7 +34,8 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $mode = ($_POST['mode'] ?? 'start') === 'join' ? 'join' : 'start';
+    $rawMode = (string) ($_POST['mode'] ?? 'start');
+    $mode = in_array($rawMode, ['join', 'playground'], true) ? $rawMode : 'start';
     $username = trim((string)($_POST['username'] ?? ''));
     $email = trim((string)($_POST['email'] ?? ''));
     $full_name = trim((string)($_POST['full_name'] ?? ''));
@@ -51,8 +56,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $isIndividual = ($planId === 'individual' && $mode === 'start');
+    $isPlayground = ($mode === 'playground');
 
-    if ($username === '' || $email === '' || $full_name === '' || $password === '') {
+    // Playground: username + email + password only (defer full name / house fields)
+    if ($isPlayground) {
+        if ($username === '' || $email === '' || $password === '') {
+            $error = 'Please enter a username, email, and password.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Enter a valid email address.';
+        } elseif ($password !== $confirm) {
+            $error = 'Passwords do not match.';
+        } elseif (strlen($password) < 6) {
+            $error = 'Password must be at least 6 characters.';
+        } else {
+            try {
+                $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1');
+                $stmt->execute([$username, $email]);
+                if ($stmt->fetchColumn()) {
+                    $error = 'Username or email already exists. Try logging in instead.';
+                } else {
+                    $demoId = 0;
+                    if (function_exists('pbj_ensure_demo_playground')) {
+                        $demoId = (int) pbj_ensure_demo_playground($pdo);
+                    }
+                    if ($demoId <= 0) {
+                        $demoCode = defined('PBJ_DEMO_INVITE_CODE') ? PBJ_DEMO_INVITE_CODE : 'FREE-DEMO';
+                        $house = pbj_find_restaurant_by_code($pdo, $demoCode);
+                        $demoId = $house ? (int) $house['id'] : 0;
+                    }
+                    if ($demoId <= 0) {
+                        throw new RuntimeException('Free demo is not available right now. Please try again shortly.');
+                    }
+
+                    $hashed = password_hash($password, PASSWORD_DEFAULT);
+                    // Defer display name until they convert / edit profile
+                    $full_name = '';
+                    $role = 'foh';
+                    $accessStatus = pbj_access_status_for_new_user($email);
+
+                    $pdo->beginTransaction();
+                    $ins = $pdo->prepare(
+                        "INSERT INTO users (username, email, full_name, password, role, theme, access_status) VALUES (?, ?, ?, ?, ?, 'sweet', ?)"
+                    );
+                    $ins->execute([$username, $email, $full_name, $hashed, $role, $accessStatus]);
+                    $uid = (int) $pdo->lastInsertId();
+
+                    pbj_join_restaurant($pdo, $uid, $demoId, $role);
+                    $pdo->prepare('UPDATE users SET role = ? WHERE id = ?')->execute([$role, $uid]);
+                    pbj_approve_invite_joiner($pdo, $uid);
+                    $pdo->commit();
+
+                    pbj_set_session_user([
+                        'id' => $uid,
+                        'username' => $username,
+                        'email' => $email,
+                        'full_name' => $full_name,
+                        'theme' => 'sweet',
+                        'theme_chosen' => 0,
+                        'access_status' => 'approved',
+                        'role' => $role,
+                    ]);
+                    $_SESSION['access_status'] = 'approved';
+                    if ($salesCodeIn !== '' && function_exists('pbj_attribute_sale')) {
+                        pbj_attribute_sale($pdo, $uid, 0, 'individual', $salesCodeIn, 'register_playground');
+                    }
+                    pbj_post_auth_redirect($pdo, '/home?playground=1');
+                    exit();
+                }
+            } catch (RuntimeException $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $error = $e->getMessage();
+            } catch (Exception $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $error = 'Registration error. Please try again.';
+            }
+        }
+    } elseif ($username === '' || $email === '' || $full_name === '' || $password === '') {
         $error = 'Please fill in all account fields.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Enter a valid email address.';
@@ -200,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create account · ilovepbj ops</title>
+    <title><?php echo $mode === 'playground' ? 'FREE DEMO' : 'Create account'; ?> · ilovepbj ops</title>
     <?php if (function_exists('pbj_render_favicon_links')) { pbj_render_favicon_links(); } ?>
     <style>
         @font-face { font-family: 'DreamingOutLoudPro'; src: url('/Fonts/dreaming-outloud-pro-regular.otf') format('opentype'); }
@@ -245,16 +328,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="top">
         <a href="/">← Back to home</a>
-        <h1>Create account</h1>
+        <h1><?php echo $mode === 'playground' ? 'FREE DEMO' : 'Create account'; ?></h1>
     </div>
     <div class="wrap">
+        <?php if ($mode !== 'playground'): ?>
         <div class="tabs">
             <a class="tab<?php echo $mode === 'start' ? ' active' : ''; ?>" href="/register?mode=start&amp;plan=<?php echo urlencode($planId); ?>">Start a restaurant</a>
             <a class="tab<?php echo $mode === 'join' ? ' active' : ''; ?>" href="/register?mode=join<?php echo $codePrefill ? ('&amp;code=' . urlencode($codePrefill)) : ''; ?>">I have a code</a>
         </div>
+        <?php endif; ?>
 
         <div class="card">
-            <?php if ($mode === 'start' && $plan): ?>
+            <?php if ($mode === 'playground'): ?>
+                <p class="hint">Enter the free demo with a username, email, and password — peek the kitchen without a paid trial. Add your name and open a real house later when you’re ready.</p>
+            <?php elseif ($mode === 'start' && $plan): ?>
                 <span class="plan-pill">
                     Plan: <?php echo htmlspecialchars($plan['name']); ?> · <?php echo htmlspecialchars($plan['price']); ?>
                     <?php if (!empty($plan['price_note'])): ?>
@@ -277,8 +364,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" name="plan" value="<?php echo htmlspecialchars($planId); ?>">
 
                 <div class="section-label">Your account</div>
+                <?php if ($mode !== 'playground'): ?>
                 <label for="full_name">Full name</label>
                 <input id="full_name" name="full_name" required value="<?php echo htmlspecialchars((string)($_POST['full_name'] ?? '')); ?>">
+                <?php endif; ?>
 
                 <div class="row">
                     <div>
@@ -302,7 +391,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <?php if ($mode === 'start'): ?>
+                <?php if ($mode === 'playground'): ?>
+                    <?php if ($salesCodePrefill !== ''): ?>
+                    <input type="hidden" name="sales_code" value="<?php echo htmlspecialchars($salesCodePrefill); ?>">
+                    <?php endif; ?>
+                <?php elseif ($mode === 'start'): ?>
                     <div class="section-label" id="start-section-label"><?php echo !empty($plan['limited']) ? 'Plan' : 'Your restaurant'; ?></div>
                     <div id="restaurant-name-wrap"<?php echo !empty($plan['limited']) ? ' style="display:none"' : ''; ?>>
                         <label for="restaurant_name">Restaurant name</label>
@@ -343,7 +436,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
 
                 <button class="btn" type="submit" id="submit-btn"><?php
-                    if ($mode === 'join') {
+                    if ($mode === 'playground') {
+                        echo 'Enter the free demo';
+                    } elseif ($mode === 'join') {
                         echo 'Create account & join';
                     } elseif (!empty($plan['limited'])) {
                         echo 'Create Individual account';
@@ -355,7 +450,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="links">
                 Already have an account? <a href="/login">Log in</a><br>
-                <a href="/#plans">See plans</a>
+                <?php if ($mode === 'playground'): ?>
+                    Ready for a real house? <a href="/register?mode=start&amp;plan=crew_10">Start free trial</a><br>
+                    <a href="/join">I have an invite code</a>
+                <?php else: ?>
+                    <a href="/register?mode=playground">Just want the FREE DEMO?</a><br>
+                    <a href="/#plans">See plans</a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
