@@ -20,19 +20,19 @@ $plans = pbj_plans();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ilovepbj ops — Restaurant operations that stick</title>
-    <meta name="description" content="ilovepbj ops is a restaurant operations hub for FOH, BOH, team, messages, and day-to-day kitchen &amp; floor tools — sized for individuals and crews, with heart.">
+    <meta name="description" content="Restaurant checklist and food cost app for independent restaurants. ilovepbj ops is a restaurant operations hub for FOH, BOH, team, messages, and day-to-day kitchen &amp; floor tools — sized for individuals and crews, with heart.">
     <link rel="canonical" href="https://ilovepbj.shop/">
     <meta name="robots" content="index, follow">
     <?php if (function_exists('pbj_render_favicon_links')) { pbj_render_favicon_links(); } ?>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ilovepbj ops">
     <meta property="og:title" content="ilovepbj ops — Restaurant operations that stick">
-    <meta property="og:description" content="FOH, BOH, team, and messages in one ops hub for restaurants. Pick a plan, create your house, and run the shift with heart.">
+    <meta property="og:description" content="Restaurant checklist and food cost app for independent restaurants. FOH, BOH, team, and messages in one ops hub — pick a plan, create your house, and run the shift with heart.">
     <meta property="og:url" content="https://ilovepbj.shop/">
     <meta property="og:image" content="https://ilovepbj.shop/icon-512.png?v=3">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="ilovepbj ops — Restaurant operations that stick">
-    <meta name="twitter:description" content="Restaurant operations hub for FOH, BOH, team, and messages.">
+    <meta name="twitter:description" content="Restaurant checklist and food cost app for independent restaurants.">
     <meta name="twitter:image" content="https://ilovepbj.shop/icon-512.png?v=3">
     <script type="application/ld+json">
     {
@@ -42,7 +42,7 @@ $plans = pbj_plans();
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
       "url": "https://ilovepbj.shop/",
-      "description": "Restaurant operations hub for FOH, BOH, team, messages, and day-to-day tools.",
+      "description": "Restaurant checklist and food cost app for independent restaurants. Operations hub for FOH, BOH, team, messages, and day-to-day tools.",
       "offers": {
         "@type": "AggregateOffer",
         "priceCurrency": "USD",
@@ -125,6 +125,13 @@ $plans = pbj_plans();
         .hero h1 {
             font-family: 'ModernLoveCaps', serif; font-size: clamp(2.6rem, 8vw, 4.2rem);
             color: var(--pink); margin: 0 0 12px; line-height: 1.1;
+        }
+        .hero .seo-lead {
+            font-size: clamp(1.05rem, 2.6vw, 1.25rem);
+            color: var(--purple);
+            margin: 0 0 10px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
         }
         .hero .tagline { font-size: clamp(1.15rem, 3vw, 1.45rem); opacity: 0.9; margin: 0 0 22px; }
         .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 14px; }
@@ -349,6 +356,7 @@ $plans = pbj_plans();
         <div class="nav-actions">
             <a class="nav-link" href="#how">How it works</a>
             <a class="nav-link" href="/food-cost-calculator">Food cost</a>
+            <a class="nav-link" href="/checklists">Checklists</a>
             <a class="nav-link" href="#plans">Plans</a>
             <a class="nav-link" href="/join">I have a code</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
@@ -358,6 +366,7 @@ $plans = pbj_plans();
 
     <header class="hero">
         <h1>Ops that stick like jelly</h1>
+        <p class="seo-lead">Restaurant checklist and food cost app for independent restaurants.</p>
         <p class="tagline">
             One cute hub for FOH, BOH, team chat, schedules, sales &amp; recipes —
             built for real restaurants, not spreadsheets that melt at 5&nbsp;p.m.
@@ -555,7 +564,7 @@ $plans = pbj_plans();
 
     <footer class="footer">
         <p>ilovepbj ops · restaurant ops with heart</p>
-        <p><a href="/login">Log in</a> · <a href="/register?mode=playground">FREE DEMO</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a> · <a href="/food-cost-calculator">Food cost calculator</a></p>
+        <p><a href="/login">Log in</a> · <a href="/register?mode=playground">FREE DEMO</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a> · <a href="/food-cost-calculator">Food cost calculator</a> · <a href="/checklists">Checklists</a></p>
         <p>
             <a href="/privacy">Privacy</a> ·
             <a href="/terms">Terms</a> ·
