@@ -80,12 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $demoId = (int) pbj_ensure_demo_playground($pdo);
                     }
                     if ($demoId <= 0) {
-                        $demoCode = defined('PBJ_DEMO_INVITE_CODE') ? PBJ_DEMO_INVITE_CODE : 'DEMO-PBJ';
+                        $demoCode = defined('PBJ_DEMO_INVITE_CODE') ? PBJ_DEMO_INVITE_CODE : 'FREE-DEMO';
                         $house = pbj_find_restaurant_by_code($pdo, $demoCode);
                         $demoId = $house ? (int) $house['id'] : 0;
                     }
                     if ($demoId <= 0) {
-                        throw new RuntimeException('Playground is not available right now. Please try again shortly.');
+                        throw new RuntimeException('Free demo is not available right now. Please try again shortly.');
                     }
 
                     $hashed = password_hash($password, PASSWORD_DEFAULT);
@@ -283,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $mode === 'playground' ? 'Try the playground' : 'Create account'; ?> · ilovepbj ops</title>
+    <title><?php echo $mode === 'playground' ? 'FREE DEMO' : 'Create account'; ?> · ilovepbj ops</title>
     <?php if (function_exists('pbj_render_favicon_links')) { pbj_render_favicon_links(); } ?>
     <style>
         @font-face { font-family: 'DreamingOutLoudPro'; src: url('/Fonts/dreaming-outloud-pro-regular.otf') format('opentype'); }
@@ -328,7 +328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="top">
         <a href="/">← Back to home</a>
-        <h1><?php echo $mode === 'playground' ? 'Try the playground' : 'Create account'; ?></h1>
+        <h1><?php echo $mode === 'playground' ? 'FREE DEMO' : 'Create account'; ?></h1>
     </div>
     <div class="wrap">
         <?php if ($mode !== 'playground'): ?>
@@ -340,7 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="card">
             <?php if ($mode === 'playground'): ?>
-                <p class="hint">Just a username, email, and password — then jump into the demo kitchen. Add your name and open a real house later when you’re ready.</p>
+                <p class="hint">Enter the free demo with a username, email, and password — peek the kitchen without a paid trial. Add your name and open a real house later when you’re ready.</p>
             <?php elseif ($mode === 'start' && $plan): ?>
                 <span class="plan-pill">
                     Plan: <?php echo htmlspecialchars($plan['name']); ?> · <?php echo htmlspecialchars($plan['price']); ?>
@@ -437,7 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <button class="btn" type="submit" id="submit-btn"><?php
                     if ($mode === 'playground') {
-                        echo 'Enter the playground';
+                        echo 'Enter the free demo';
                     } elseif ($mode === 'join') {
                         echo 'Create account & join';
                     } elseif (!empty($plan['limited'])) {
@@ -454,7 +454,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Ready for a real house? <a href="/register?mode=start&amp;plan=crew_10">Start free trial</a><br>
                     <a href="/join">I have an invite code</a>
                 <?php else: ?>
-                    <a href="/register?mode=playground">Just want to try the playground?</a><br>
+                    <a href="/register?mode=playground">Just want the FREE DEMO?</a><br>
                     <a href="/#plans">See plans</a>
                 <?php endif; ?>
             </div>
