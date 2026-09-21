@@ -2101,6 +2101,7 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
         $isJoined = !empty($_GET['joined']);
         $isIndividual = !empty($_GET['individual']);
         $isTrialWelcome = !empty($_GET['trial']);
+        $isDemoGuest = !empty($_SESSION['demo_guest']) || !empty($_GET['peek']);
         $dashTrial = null;
         if (function_exists('pbj_trial_info') && !empty($_SESSION['user_id'])) {
             $dashTrial = pbj_trial_info($pdo, (int) $_SESSION['user_id']);
@@ -2166,6 +2167,19 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
         <div class="urban-badge">🏙️ Modern Urban Edge</div>
         <?php elseif ($is_coffee): ?>
         <div class="coffee-badge">☕ Coffee Shop Cozy</div>
+        <?php endif; ?>
+        <?php if ($isDemoGuest): ?>
+        <div class="welcome-banner">
+            <strong><?php echo $fun_names ? 'You’re peeking the free demo 👀' : 'You’re peeking the free demo.'; ?></strong><br>
+            <?php echo $fun_names
+                ? 'No signup — explore FREE-DEMO (resets nightly). When you’re ready, create a real account so your stuff sticks.'
+                : 'Guest peek of FREE-DEMO (resets nightly). Create a real account when you want to keep your work.'; ?>
+            <div style="margin-top:10px;font-size:0.95rem;opacity:0.85;">
+                <a href="/register?mode=playground"><?php echo $fun_names ? 'Create a demo login' : 'Create a demo login'; ?></a>
+                ·
+                <a href="/register?plan=crew_10"><?php echo $fun_names ? 'Start a free trial house' : 'Start free trial'; ?></a>
+            </div>
+        </div>
         <?php endif; ?>
         <?php if ($isWelcome || $isJoined || $welcomeCode !== ''): ?>
         <div class="welcome-banner">

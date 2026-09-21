@@ -264,7 +264,7 @@ require_once __DIR__ . '/config.php';
             <a class="nav-link" href="/checklists">Checklists</a>
             <a class="nav-link" href="#try-free">Try free</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
-            <a class="btn btn-mint btn-sm" href="/register?mode=playground">FREE DEMO</a>
+            <a class="btn btn-mint btn-sm" href="/demo">Peek free demo</a>
         </div>
     </nav>
 
@@ -274,7 +274,8 @@ require_once __DIR__ . '/config.php';
             Recipe → plate cost → food cost % → suggested menu price. Built for real kitchens, not spreadsheet spaghetti.
         </p>
         <div class="hero-ctas">
-            <a class="btn btn-primary" href="/register?mode=playground">Enter FREE DEMO</a>
+            <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
+            <a class="btn btn-ghost" href="/register?mode=playground">Create a demo login</a>
             <a class="btn btn-purple" href="/register">Start a 14-day free trial (no card)</a>
             <a class="btn btn-ghost" href="/login">Already have a house? Log in</a>
         </div>
@@ -316,7 +317,7 @@ require_once __DIR__ . '/config.php';
                     Username + email + password, no card. Explore costing, recipes, and inventory.
                     <strong>Resets every night</strong> so entered data is wiped by morning.
                 </p>
-                <a class="btn btn-primary" href="/register?mode=playground">Enter FREE DEMO</a>
+                <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
             </div>
             <div class="try-card trial">
                 <h3>14-day free trial</h3>
@@ -352,7 +353,7 @@ require_once __DIR__ . '/config.php';
             <h2>Ready to cost a plate?</h2>
             <p>Start in the FREE DEMO, or open a real house with a no-card trial.</p>
             <div class="cta-actions">
-                <a class="btn btn-primary" href="/register?mode=playground">Enter FREE DEMO</a>
+                <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
                 <a class="btn btn-ghost" href="/register">Start free trial</a>
                 <a class="btn btn-ghost" href="/login">Log in</a>
             </div>
@@ -361,7 +362,7 @@ require_once __DIR__ . '/config.php';
 
     <footer class="footer">
         <p>ilovepbj ops — FOH, BOH, schedules, and recipes in one house. Food costing is the door in.</p>
-        <p><a href="/">Home</a> · <a href="/checklists">Checklists</a> · <a href="/register?mode=playground">FREE DEMO</a> · <a href="/register">Free trial</a> · <a href="/login">Log in</a></p>
+        <p><a href="/">Home</a> · <a href="/checklists">Checklists</a> · <a href="/demo">Peek free demo</a> · <a href="/register">Free trial</a> · <a href="/login">Log in</a></p>
         <p>
             <a href="/privacy">Privacy</a> ·
             <a href="/terms">Terms</a> ·

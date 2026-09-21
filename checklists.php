@@ -242,7 +242,7 @@ require_once __DIR__ . '/config.php';
             <a class="nav-link" href="/food-cost-calculator">Food cost</a>
             <a class="nav-link" href="#try-free">Try free</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
-            <a class="btn btn-mint btn-sm" href="/register?mode=playground">FREE DEMO</a>
+            <a class="btn btn-mint btn-sm" href="/demo">Peek free demo</a>
         </div>
     </nav>
 
@@ -254,7 +254,8 @@ require_once __DIR__ . '/config.php';
             on the same page — even when the crew is small and the night is loud.
         </p>
         <div class="hero-ctas">
-            <a class="btn btn-primary" href="/register?mode=playground">Enter FREE DEMO</a>
+            <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
+            <a class="btn btn-ghost" href="/register?mode=playground">Create a demo login</a>
             <a class="btn btn-purple" href="/register">Start a 14-day free trial (no card)</a>
             <a class="btn btn-ghost" href="/food-cost-calculator">Food cost calculator</a>
         </div>
@@ -336,7 +337,7 @@ require_once __DIR__ . '/config.php';
                     Username + email + password, no card. Explore opening/closing and prep-style ops
                     with the rest of the house. <strong>Resets every night.</strong>
                 </p>
-                <a class="btn btn-primary" href="/register?mode=playground">Enter FREE DEMO</a>
+                <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
             </div>
             <div class="try-card trial">
                 <h3>14-day free trial</h3>
@@ -355,7 +356,7 @@ require_once __DIR__ . '/config.php';
                 <a href="/food-cost-calculator" style="color:var(--mint);">plate cost &amp; food cost %</a>.
             </p>
             <div class="cta-actions">
-                <a class="btn btn-primary" href="/register?mode=playground">Enter FREE DEMO</a>
+                <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
                 <a class="btn btn-ghost" href="/register">Start free trial</a>
                 <a class="btn btn-ghost" href="/food-cost-calculator">Food cost</a>
             </div>
@@ -368,7 +369,7 @@ require_once __DIR__ . '/config.php';
         <p>
             <a href="/">Home</a> ·
             <a href="/food-cost-calculator">Food cost calculator</a> ·
-            <a href="/register?mode=playground">FREE DEMO</a> ·
+            <a href="/demo">Peek free demo</a> ·
             <a href="/register">Free trial</a> ·
             <a href="/login">Log in</a>
         </p>

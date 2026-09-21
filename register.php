@@ -10,12 +10,18 @@ if (defined('AUTH_BYPASS') && AUTH_BYPASS) {
     exit();
 }
 
-if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0) {
-    pbj_post_auth_redirect($pdo);
-}
-
 $rawMode = (string) ($_GET['mode'] ?? $_POST['mode'] ?? 'start');
 $mode = in_array($rawMode, ['join', 'playground'], true) ? $rawMode : 'start';
+
+// Demo guests may open register to create a real / named account — clear peek session first.
+if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0) {
+    $wantConvert = in_array($mode, ['playground', 'start'], true) && !empty($_SESSION['demo_guest']);
+    if ($wantConvert) {
+        $_SESSION = [];
+    } else {
+        pbj_post_auth_redirect($pdo);
+    }
+}
 $planId = (string)($_GET['plan'] ?? $_POST['plan'] ?? pbj_default_plan_id());
 $resolved = pbj_plan_by_id($planId);
 if (!$resolved || !empty($resolved['coming'])) {
@@ -340,7 +346,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="card">
             <?php if ($mode === 'playground'): ?>
-                <p class="hint">Enter the free demo with a username, email, and password — peek the kitchen without a paid trial. Add your name and open a real house later when you’re ready.</p>
+                <?php if (!empty($_GET['peek_error'])): ?>
+                    <p class="hint" style="color:#b00020;">One-tap peek hit a snag — you can still create a demo login below.</p>
+                <?php endif; ?>
+                <p class="hint">Want in with zero typing? <a href="/demo">Peek free demo — no signup</a>. Or create a named demo login (username, email, password) below — no card. Open a real house later when you’re ready.</p>
             <?php elseif ($mode === 'start' && $plan): ?>
                 <span class="plan-pill">
                     Plan: <?php echo htmlspecialchars($plan['name']); ?> · <?php echo htmlspecialchars($plan['price']); ?>
