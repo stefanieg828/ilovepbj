@@ -370,11 +370,6 @@ $is_sweet = $__tf['fun']; // fun labels + stickers (Sweet + Neon)
                 <h3>Quick Tools</h3>
                 <p><?php echo $is_sweet ? 'Converters, timers, yields & kitchen cheats' : 'Converters, timers, yields, and kitchen cheats'; ?></p>
             </a>
-            <a href="/schedule" class="card" data-card-id="my-schedule" data-perm-any="admin.schedules.view,admin.schedules.trade">
-                <?php pbj_render_card_icon('sandwich-hq/schedules', 'My Schedule', '🗓️'); ?>
-                <h3><?php echo $is_sweet ? 'My Schedule' : 'My Schedule'; ?></h3>
-                <p><?php echo $is_sweet ? 'Your shifts — give up, swap, or claim open ones' : 'Your posted shifts — give up, swap, or claim'; ?></p>
-            </a>
         </div>
     </div>
 
