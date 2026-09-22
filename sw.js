@@ -3,7 +3,7 @@
  * Offline shells: inventory loop + auto-order + FOH/BOH checklists + pulse deps
  * Strategy: network-first for navigations; cache-first for static assets.
  */
-var CACHE = 'pbj-ops-v9';
+var CACHE = 'pbj-ops-v12';
 var PRECACHE = [
   '/manifest.webmanifest',
   '/icon-192.png',
@@ -45,6 +45,14 @@ var PRECACHE = [
   '/BOH/opening-closing',
   '/BOH/prep',
   '/BOH/cleaning',
+  '/BOH/86',
+  '/BOH/86/display',
+  '/86-board-shared.js?v=1',
+  '/BOH/allergens',
+  '/allergen-menu-shared.js?v=1',
+  '/schedule-shared.js?v=1',
+  '/schedule',
+  '/admin/schedules',
   '/home'
 ];
 
@@ -93,11 +101,12 @@ function isOfflineShell(url) {
     '/admin/sales', '/admin/labor', '/admin/cash', '/admin/pnl',
     '/admin/waste', '/admin/pmix', '/BOH/menu',
     '/FOH/opening-closing', '/FOH/sidework', '/FOH/bar',
-    '/BOH/opening-closing', '/BOH/prep', '/BOH/cleaning',
+    '/BOH/opening-closing', '/BOH/prep', '/BOH/cleaning', '/BOH/86', '/BOH/86/display', '/BOH/allergens',
+    '/schedule', '/admin/schedules',
     '/home', '/dashboard'
   ];
   if (shells.indexOf(p) !== -1) return true;
-  return /admin-inventory|admin-auto-order|admin-checklist|admin-pos-import|admin-pos-connect|admin-house-setup|admin-sales|admin-labor|admin-cash|admin-pnl|admin-waste|admin-pmix|the-heat-menu|showtime-|the-heat-(prep|cleaning|opening)/.test(url.pathname);
+  return /admin-inventory|admin-auto-order|admin-checklist|admin-pos-import|admin-pos-connect|admin-house-setup|admin-sales|admin-labor|admin-cash|admin-pnl|admin-waste|admin-pmix|admin-schedules|my-schedule|the-heat-menu|showtime-|the-heat-(prep|cleaning|opening|86|allergens)|schedule-shared/.test(url.pathname);
 }
 
 self.addEventListener('fetch', function (event) {
