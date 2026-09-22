@@ -250,29 +250,24 @@ $is_sweet = $__tf['fun']; // fun labels + stickers (Sweet + Neon)
 
     <div class="content">
         <div class="hub-intro"><?php echo $is_sweet
-                ? 'Sandwich HQ — team, ops, schedules, reports, inventory & compliance in one place 💕'
-                : 'Team, operations, schedules, reports, inventory, and compliance.'; ?></div>
+                ? 'Sandwich HQ — team, ops, schedules, reports, inventory & catering in one place 💕'
+                : 'Team, operations, schedules, reports, inventory, and catering.'; ?></div>
         <p class="hub-reorder-hint">Drag cards to rearrange · order saves on this device</p>
         <div class="grid hub-grid" data-hub-key="admin">
             <a href="/admin/team" class="card" data-card-id="team" data-perm-any="admin.team.roster.add,admin.team.permissions_manage,admin.team.docs.edit_guide,admin.team.onboarding.create_invite">
                 <?php pbj_render_card_icon('sandwich-hq/team', 'Team & Roles', '👥'); ?>
                 <h3>Team & Roles</h3>
-                <p><?php echo $is_sweet ? 'Roster, handbook & FOH/BOH training manuals' : 'Roster, handbook, and training manuals'; ?></p>
+                <p><?php echo $is_sweet ? 'Roster, handbook, training & compliance' : 'Roster, handbook, training, and compliance'; ?></p>
             </a>
             <a href="/admin/ops" class="card" data-card-id="ops" data-perm-any="admin.ops.settings.location,admin.ops.docs.edit_guide,admin.ops.docs.sections">
                 <?php pbj_render_card_icon('sandwich-hq/operations', 'Restaurant Operations', '🏢'); ?>
                 <h3>Restaurant Operations</h3>
-                <p><?php echo $is_sweet ? 'Settings, SOPs & health & safety' : 'Settings, SOPs, and health & safety'; ?></p>
+                <p><?php echo $is_sweet ? 'Settings, SOPs, safety & checklist overview' : 'Settings, SOPs, safety, and checklist overview'; ?></p>
             </a>
             <a href="/admin/schedules" class="card" data-card-id="schedules" data-perm-any="admin.schedules.view,admin.schedules.add_shift,admin.schedules.clear_week,admin.schedules.trade">
                 <?php pbj_render_card_icon('sandwich-hq/schedules', 'Schedules & Shifts', '🗓️'); ?>
                 <h3>Schedules & Shifts</h3>
                 <p><?php echo $is_sweet ? 'Schedules, alerts & star of the house' : 'Schedules, alerts, and employee spotlight'; ?></p>
-            </a>
-            <a href="/schedule" class="card" data-card-id="my-schedule" data-perm-any="admin.schedules.view,admin.schedules.trade">
-                <?php pbj_render_card_icon('sandwich-hq/schedules', 'My Schedule', '🗓️'); ?>
-                <h3><?php echo $is_sweet ? 'My Schedule' : 'My Schedule'; ?></h3>
-                <p><?php echo $is_sweet ? 'Your shifts — give up, swap, or claim open ones' : 'Your posted shifts — give up, swap, or claim'; ?></p>
             </a>
             <a href="/admin/reports" class="card" data-card-id="reports" data-perm="admin.reports.view">
                 <?php pbj_render_card_icon('sandwich-hq/reports', 'Reports & Sales', '📊'); ?>
@@ -284,15 +279,10 @@ $is_sweet = $__tf['fun']; // fun labels + stickers (Sweet + Neon)
                 <h3>Inventory & Vendors</h3>
                 <p>Products, counts, auto-order, and vendor contacts</p>
             </a>
-            <a href="/admin/compliance" class="card" data-card-id="compliance" data-perm="admin.compliance.view">
-                <?php pbj_render_card_icon('sandwich-hq/compliance', 'Compliance & Certifications', '✅'); ?>
-                <h3>Compliance & Certifications</h3>
-                <p><?php echo $is_sweet ? 'Certs, expirations & handbook sign-offs' : 'Certs, expirations, and document sign-offs'; ?></p>
-            </a>
-            <a href="/admin/checklist-overview" class="card" data-card-id="checklist-overview" data-perm-any="ops.receive_list_completion,admin.ops.docs.sections">
-                <?php pbj_render_card_icon('sandwich-hq/operations', 'Checklist Overview', '📋'); ?>
-                <h3><?php echo $is_sweet ? 'Checklist Overview' : 'Checklist Overview'; ?></h3>
-                <p><?php echo $is_sweet ? 'Who finished what — FOH, BOH & prep' : 'FOH/BOH completion board for managers'; ?></p>
+            <a href="/admin/catering" class="card" data-card-id="catering" data-perm="admin.catering.view">
+                <?php pbj_render_card_icon('sandwich-hq/operations', 'Catering', '🥂'); ?>
+                <h3>Catering</h3>
+                <p><?php echo $is_sweet ? 'Events, trays & party orders — coming together' : 'Events, trays, and party orders'; ?></p>
             </a>
         </div>
     </div>

@@ -248,6 +248,14 @@ function pbj_permission_catalog(): array {
             ],
         ],
         [
+            'id' => 'admin_catering',
+            'label' => 'Admin · Catering',
+            'items' => [
+                ['key' => 'admin.catering.view', 'label' => 'View Catering'],
+                ['key' => 'admin.catering.edit', 'label' => 'Edit Catering'],
+            ],
+        ],
+        [
             'id' => 'admin_compliance',
             'label' => 'Admin · Compliance & Certs',
             'items' => [
@@ -361,6 +369,7 @@ function pbj_permissions_default_matrix(): array {
         'admin.schedules.*',
         'admin.reports.*',
         'admin.inventory.*',
+        'admin.catering.*',
         'admin.compliance.*',
         'messages.*',
         'settings.*',

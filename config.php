@@ -2117,6 +2117,7 @@ function pbj_page_routes(): array {
         // Admin children
         'admin-team.php' => '/admin/team',
         'admin-ops.php' => '/admin/ops',
+        'admin-catering.php' => '/admin/catering',
         'admin-schedules.php' => '/admin/schedules',
         'my-schedule.php' => '/schedule',
         'admin-reports.php' => '/admin/reports',
