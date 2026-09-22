@@ -3,7 +3,7 @@
  * Offline shells: inventory loop + auto-order + FOH/BOH checklists + pulse deps
  * Strategy: network-first for navigations; cache-first for static assets.
  */
-var CACHE = 'pbj-ops-v12';
+var CACHE = 'pbj-ops-v13';
 var PRECACHE = [
   '/manifest.webmanifest',
   '/icon-192.png',
