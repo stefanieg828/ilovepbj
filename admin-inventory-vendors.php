@@ -112,7 +112,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <a href="/admin/auto-order" class="card">
                 <?php pbj_render_card_icon('inventory-hub/auto-order', 'Auto-Order', '🤖'); ?>
                 <h3><?php echo $is_sweet ? 'Auto-Order' : 'Auto-Order'; ?></h3>
-                <p><?php echo $is_sweet ? 'Build list by vendor · export · email' : 'Build list by vendor, export, email'; ?></p>
+                <p><?php echo $is_sweet ? 'Vendor CSV · Print/PDF · email' : 'Vendor CSV, Print/PDF, email'; ?></p>
             </a>
             <a href="/admin/product-list" class="card">
                 <?php pbj_render_card_icon('inventory-hub/product-list', 'Master Product List', '📃'); ?>
@@ -131,7 +131,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <a href="/admin/order-guides" class="card">
                 <?php pbj_render_card_icon('inventory-hub/order-guides', 'Order Guides', '🛒'); ?>
                 <h3>Order Guides</h3>
-                <p><?php echo $is_sweet ? 'Saved order templates (optional)' : 'Saved order templates (optional)'; ?></p>
+                <p><?php echo $is_sweet ? 'Vendor CSV & Print/PDF templates' : 'Vendor CSV & Print/PDF templates'; ?></p>
             </a>
             <a href="/admin/invoices" class="card" id="card-invoices">
                 <?php pbj_render_card_icon('inventory-hub/invoices', 'Invoices', '🧾'); ?>

@@ -85,12 +85,22 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         .cutoff-banner.soon { background: #FFF3E0; border: 1px solid #FFB74D; color: #E65100; }
         .cutoff-banner.urgent { background: #FFEBEE; border: 1px solid #EF9A9A; color: #B71C1C; }
         .cutoff-banner a { font-weight: 700; }
+        .print-only { display: none; }
+        .vendor-sheet { width: 100%; border-collapse: collapse; font-size: 10pt; line-height: 1.25; margin: 0 0 18px; }
+        .vendor-sheet th, .vendor-sheet td { border: 1px solid #999; padding: 4px 6px; text-align: left; vertical-align: top; }
+        .vendor-sheet th { background: #e8e8e8 !important; font-weight: 700; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .vendor-sheet .num { text-align: right; white-space: nowrap; }
+        .vendor-sheet-title { font-size: 14pt; font-weight: 700; margin: 0 0 4px; }
+        .vendor-sheet-meta { font-size: 9pt; margin: 0 0 8px; opacity: 0.85; }
+        .vendor-sheet-block { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; }
         @media print {
             body { background: white; padding-bottom: 0; color: #000; }
             .header { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .back-link, .toolbar, .filters, .actions-bar, .bottom-nav, #bottom-nav, nav, .toast, #saved-section, #options-card, .vendor-actions, .line button, .warn-box, .flow-steps { display: none !important; }
+            .back-link, .toolbar, .filters, .actions-bar, .bottom-nav, #bottom-nav, nav, .toast, #saved-section, #options-card, .vendor-actions, .line button, .warn-box, .flow-steps, .stats-row, .intro, #cutoff-banner, #warn-box, #order-root { display: none !important; }
             .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
             .line input { border: none; padding: 0; background: transparent; }
+            .print-only { display: block !important; }
+            #vendor-print-root { display: block !important; padding: 0 8px; }
         }
     </style>
 </head>
@@ -207,8 +217,9 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <p class="hint" id="usage-hint" style="margin-top:-4px;"></p>
             <div class="toolbar" style="margin-bottom:0;">
                 <button type="button" class="btn btn-primary" id="regen-btn"><?php echo $is_sweet ? 'Refresh from inventory' : 'Refresh from inventory'; ?></button>
-                <button type="button" class="btn btn-secondary" id="export-all-btn"><?php echo $is_sweet ? 'Export full CSV' : 'Export full CSV'; ?></button>
-                <button type="button" class="btn btn-secondary" id="print-btn"><?php echo $is_sweet ? 'Print' : 'Print'; ?></button>
+                <button type="button" class="btn btn-primary" id="export-vendor-btn"><?php echo $is_sweet ? 'Vendor CSV 📥' : 'Vendor CSV'; ?></button>
+                <button type="button" class="btn btn-secondary" id="export-all-btn"><?php echo $is_sweet ? 'Full CSV (internal)' : 'Full CSV (internal)'; ?></button>
+                <button type="button" class="btn btn-secondary" id="print-btn"><?php echo $is_sweet ? 'Print / PDF' : 'Print / PDF'; ?></button>
                 <button type="button" class="btn btn-secondary" id="copy-all-btn"><?php echo $is_sweet ? 'Copy all text' : 'Copy all text'; ?></button>
                 <button type="button" class="btn btn-secondary" id="email-all-btn"><?php echo $is_sweet ? 'Email all drafts' : 'Email all drafts'; ?></button>
                 <button type="button" class="btn btn-ghost" id="save-order-btn"><?php echo $is_sweet ? 'Save this order' : 'Save this order'; ?></button>
@@ -218,6 +229,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         <div id="cutoff-banner" class="cutoff-banner"></div>
         <div id="warn-box" class="warn-box" style="display:none;"></div>
         <div id="order-root"></div>
+        <div class="print-only" id="vendor-print-root" aria-hidden="true"></div>
 
         <div class="card" id="saved-section">
             <h2><?php echo $is_sweet ? 'Saved orders' : 'Saved orders'; ?></h2>
@@ -1104,7 +1116,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                     rows +
                     '<div class="vendor-actions">' +
                         siteBtn + orderBtn +
-                        '<button type="button" class="btn btn-small btn-ghost" data-export-vendor="' + esc(vendor) + '">' + (isSweet ? 'CSV' : 'CSV') + '</button>' +
+                        '<button type="button" class="btn btn-small btn-ghost" data-export-vendor="' + esc(vendor) + '">' + (isSweet ? 'Vendor CSV' : 'Vendor CSV') + '</button>' +
+                        '<button type="button" class="btn btn-small btn-ghost" data-print-vendor="' + esc(vendor) + '">' + (isSweet ? 'Print / PDF' : 'Print / PDF') + '</button>' +
                         '<button type="button" class="btn btn-small btn-ghost" data-copy-vendor="' + esc(vendor) + '">' + (isSweet ? 'Copy' : 'Copy') + '</button>' +
                         emailBtn +
                         textBtn +
@@ -1153,6 +1166,90 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 rows.push(cells.join(','));
             });
             return rows.join('\n');
+        }
+
+        function orderUnitCanon(line) {
+            var raw = String((line && (line.orderBy || line.parBy || line.unit)) || 'each').toLowerCase();
+            if (raw.indexOf('case') === 0) return 'case';
+            return 'each';
+        }
+
+        /** Clean Sysco-style sheet: case|each units, grouped by vendor in CSV rows. */
+        function linesToVendorCsv(lines) {
+            var header = ['Vendor', 'AccountNumber', 'Item', 'SKU', 'OrderQty', 'OrderUnit', 'OnHand', 'Par'];
+            var rows = [header.join(',')];
+            var sorted = (lines || []).slice().sort(function (a, b) {
+                var va = String(a.vendor || '').localeCompare(String(b.vendor || ''));
+                if (va) return va;
+                return String(a.name || '').localeCompare(String(b.name || ''));
+            });
+            sorted.forEach(function (l) {
+                var meta = vendorMeta[l.vendor] || {};
+                var cells = [
+                    l.vendor || '',
+                    meta.accountNumber || '',
+                    l.name || '',
+                    l.sku || '',
+                    l.qty,
+                    orderUnitCanon(l),
+                    l.onHand != null && l.onHand !== '' ? l.onHand : '',
+                    l.par != null && l.par !== '' ? l.par : ''
+                ].map(function (c) {
+                    var s = String(c == null ? '' : c);
+                    if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+                    return s;
+                });
+                rows.push(cells.join(','));
+            });
+            return '\uFEFF' + rows.join('\r\n');
+        }
+
+        function buildVendorPrintHtml(lines, onlyVendor) {
+            var date = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            var byVendor = {};
+            (lines || []).forEach(function (l) {
+                var v = l.vendor || UNASSIGNED;
+                if (onlyVendor && v !== onlyVendor) return;
+                if (!byVendor[v]) byVendor[v] = [];
+                byVendor[v].push(l);
+            });
+            var keys = Object.keys(byVendor).sort();
+            if (!keys.length) {
+                return '<p>' + (isSweet ? 'Nothing to print' : 'Nothing to print') + '</p>';
+            }
+            var title = isSweet ? 'Vendor order guide' : 'Vendor order guide';
+            var html = '<div class="vendor-sheet-meta">' + esc(title) + ' · ' + esc(date) + ' · ilovepbj ops</div>';
+            keys.forEach(function (vendor) {
+                var meta = vendorMeta[vendor] || {};
+                var bits = [];
+                if (meta.accountNumber) bits.push('Account #: ' + meta.accountNumber);
+                if (meta.contact) bits.push(meta.contact);
+                if (meta.phone) bits.push(meta.phone);
+                if (meta.email) bits.push(meta.email);
+                var rows = byVendor[vendor].map(function (l) {
+                    return '<tr>' +
+                        '<td>' + esc(l.name) + '</td>' +
+                        '<td>' + esc(l.sku || '') + '</td>' +
+                        '<td class="num">' + esc(l.qty) + '</td>' +
+                        '<td>' + esc(orderUnitCanon(l)) + '</td>' +
+                        '<td class="num">' + esc(l.onHand != null && l.onHand !== '' ? l.onHand : '') + '</td>' +
+                        '<td class="num">' + esc(l.par != null && l.par !== '' ? l.par : '') + '</td>' +
+                    '</tr>';
+                }).join('');
+                html += '<div class="vendor-sheet-block">' +
+                    '<div class="vendor-sheet-title">' + esc(vendor) + '</div>' +
+                    (bits.length ? '<div class="vendor-sheet-meta">' + esc(bits.join(' · ')) + '</div>' : '') +
+                    '<table class="vendor-sheet"><thead><tr>' +
+                    '<th>Item</th><th>SKU</th><th>Qty</th><th>Order unit</th><th>On hand</th><th>Par</th>' +
+                    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+            });
+            return html;
+        }
+
+        function prepareVendorPrint(lines, onlyVendor) {
+            var root = document.getElementById('vendor-print-root');
+            if (!root) return;
+            root.innerHTML = buildVendorPrintHtml(lines, onlyVendor || null);
         }
 
         function downloadCsv(filename, csv) {
@@ -1332,7 +1429,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                     '<h3>' + esc(o.label || (isSweet ? 'Order' : 'Order')) + '</h3>' +
                     '<div class="vendor-meta">' + esc(when) + ' · ' + (o.lines || []).length + (isSweet ? ' lines' : ' lines') +
                     ' · ' + (o.vendorCount || 0) + (isSweet ? ' vendors' : ' vendors') + '</div>' +
-                    '<button type="button" class="btn btn-small btn-ghost" data-export-saved="' + esc(o.id) + '">' + (isSweet ? 'Export CSV' : 'Export CSV') + '</button> ' +
+                    '<button type="button" class="btn btn-small btn-ghost" data-export-saved="' + esc(o.id) + '">' + (isSweet ? 'Vendor CSV' : 'Vendor CSV') + '</button> ' +
                     '<button type="button" class="btn btn-small btn-danger" data-del-saved="' + esc(o.id) + '">' + (isSweet ? 'Remove' : 'Remove') + '</button>' +
                     '</div>';
             }).join('');
@@ -1395,17 +1492,29 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             toast(isSweet ? 'Opening combined email draft 💌' : 'Opening email draft');
         });
 
+        document.getElementById('export-vendor-btn').addEventListener('click', function () {
+            collectEdits();
+            var lines = allLines();
+            if (!lines.length) { alert(isSweet ? 'Nothing to export' : 'Nothing to export'); return; }
+            var stamp = new Date().toISOString().slice(0, 10);
+            downloadCsv('pbj-vendor-order-' + stamp + '.csv', linesToVendorCsv(lines));
+            toast(isSweet ? 'Vendor CSV ready — forward to Sysco-style vendors 📥' : 'Vendor CSV downloaded');
+        });
+
         document.getElementById('export-all-btn').addEventListener('click', function () {
             collectEdits();
             var lines = allLines();
             if (!lines.length) { alert(isSweet ? 'Nothing to export' : 'Nothing to export'); return; }
             var stamp = new Date().toISOString().slice(0, 10);
-            downloadCsv('pbj-order-' + stamp + '.csv', linesToCsv(lines));
-            toast(isSweet ? 'CSV downloaded 📥' : 'CSV downloaded');
+            downloadCsv('pbj-order-full-' + stamp + '.csv', linesToCsv(lines));
+            toast(isSweet ? 'Full CSV downloaded 📥' : 'CSV downloaded');
         });
 
         document.getElementById('print-btn').addEventListener('click', function () {
             collectEdits();
+            var lines = allLines();
+            if (!lines.length) { alert(isSweet ? 'Nothing to print' : 'Nothing to print'); return; }
+            prepareVendorPrint(lines, null);
             window.print();
         });
 
@@ -1462,8 +1571,18 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 var lines = (draft[v] || []).map(function (l) { return Object.assign({ vendor: v }, l); });
                 if (!lines.length) return;
                 var safe = v.replace(/[^\w\-]+/g, '-').slice(0, 40);
-                downloadCsv('pbj-order-' + safe + '.csv', linesToCsv(lines));
+                downloadCsv('pbj-vendor-order-' + safe + '.csv', linesToVendorCsv(lines));
                 toast(isSweet ? 'Vendor CSV ready 📥' : 'CSV ready');
+                return;
+            }
+            var prv = e.target.closest('[data-print-vendor]');
+            if (prv) {
+                collectEdits();
+                var pv = prv.dataset.printVendor;
+                var plines = (draft[pv] || []).map(function (l) { return Object.assign({ vendor: pv }, l); });
+                if (!plines.length) return;
+                prepareVendorPrint(plines, pv);
+                window.print();
                 return;
             }
             var cp = e.target.closest('[data-copy-vendor]');
@@ -1507,8 +1626,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             if (exp) {
                 var order = savedState.orders.find(function (o) { return o.id === exp.dataset.exportSaved; });
                 if (!order) return;
-                downloadCsv('pbj-saved-order-' + order.id + '.csv', linesToCsv(order.lines || []));
-                toast(isSweet ? 'CSV downloaded 📥' : 'CSV downloaded');
+                downloadCsv('pbj-vendor-order-saved-' + order.id + '.csv', linesToVendorCsv(order.lines || []));
+                toast(isSweet ? 'Vendor CSV downloaded 📥' : 'CSV downloaded');
             }
         });
 
