@@ -105,7 +105,7 @@ h1{<?php if($is_sweet): ?>font-family:'ModernLoveCaps',serif;<?php else: ?>font-
     </div>
     <div class="card">
       <h2><?php echo $is_sweet ? 'Share your inquire link' : 'Share inquire link'; ?></h2>
-      <p class="hint"><?php echo $is_sweet ? 'Guests land in this house's Catering inbox — no login needed for them.' : 'Public form posts into this restaurant's Catering inbox.'; ?></p>
+      <p class="hint"><?php echo $is_sweet ? "Guests land in this house's Catering inbox — no login needed for them." : "Public form posts into this restaurant's Catering inbox."; ?></p>
       <div class="share-box" id="share-box">Loading link…</div>
       <div class="toolbar" style="margin-top:10px">
         <button type="button" class="btn btn-secondary btn-small" id="btn-copy-link">Copy link</button>
