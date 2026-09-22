@@ -2081,6 +2081,9 @@ function pbj_page_routes(): array {
         'the-heat-menu.php' => '/BOH/menu',
         'the-heat-recipes.php' => '/BOH/recipe-cards',
         'the-heat-yields.php' => '/BOH/yields',
+        'the-heat-86.php' => '/BOH/86',
+        'the-heat-86-display.php' => '/BOH/86/display',
+        'the-heat-allergens.php' => '/BOH/allergens',
         // Settings cards
         'whiskings-theme.php' => '/settings/theme',
         'whiskings-profile.php' => '/settings/profile',
@@ -2114,7 +2117,11 @@ function pbj_page_routes(): array {
         // Admin children
         'admin-team.php' => '/admin/team',
         'admin-ops.php' => '/admin/ops',
+        'admin-catering.php' => '/admin/catering',
+        'catering.php' => '/catering',
+        'catering-inquire.php' => '/catering/inquire',
         'admin-schedules.php' => '/admin/schedules',
+        'my-schedule.php' => '/schedule',
         'admin-reports.php' => '/admin/reports',
         'admin-inventory-vendors.php' => '/admin/inventory',
         'admin-compliance.php' => '/admin/compliance',

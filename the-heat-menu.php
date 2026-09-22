@@ -93,6 +93,21 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         .modal h2 { <?php if ($is_sweet): ?>font-family: 'ModernLoveCaps', serif; color: #E55163;<?php else: ?>font-family: 'Lora', serif; color: #1A2A44;<?php endif; ?> font-size: 1.5rem; margin: 0 0 14px; }
         .modal-actions { display: flex; gap: 10px; }
         .modal-actions .btn { flex: 1; }
+        .allergen-section { margin: 12px 0 4px; padding-top: 12px; border-top: 1px dashed <?php echo $is_sweet ? '#F3E8DD' : '#E6DFD7'; ?>; }
+        .allergen-section > .alg-label { font-size: 0.85rem; opacity: 0.65; margin-bottom: 8px; }
+        .allergen-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        @media (max-width: 400px) { .allergen-checks { grid-template-columns: 1fr; } }
+        .allergen-check {
+            display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; cursor: pointer; font-size: 0.92rem;
+            <?php if ($is_sweet): ?>background: #FFFBF8; border: 1px solid #F3E8DD;<?php else: ?>background: #FAF8F5; border: 1px solid #E6DFD7;<?php endif; ?>
+        }
+        .allergen-check:has(input:checked) {
+            <?php if ($is_sweet): ?>background: #FFF5F6; border-color: #E55163;<?php else: ?>background: #EEF2F8; border-color: #1A2A44;<?php endif; ?>
+        }
+        .allergen-check input { width: 16px; height: 16px; accent-color: <?php echo $is_sweet ? '#E55163' : '#1A2A44'; ?>; }
+        .alg-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .alg-chip { font-size: 0.72rem; padding: 2px 7px; border-radius: 999px; background: #FFECB3; color: #6D4C00; }
+        .alg-note { font-size: 0.82rem; opacity: 0.75; font-style: italic; margin-top: 4px; }
         .print-only { display: none; }
         @media print {
             .no-print, .back-link, .toolbar, .filters, .actions-bar, .bottom-nav, #bottom-nav, nav, .toast, .modal-backdrop, .btn { display: none !important; }
@@ -223,6 +238,14 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                     </div>
                 </div>
                 <div class="field"><label><?php echo $is_sweet ? 'Notes' : 'Notes'; ?></label><input id="e-notes"></div>
+                <div class="allergen-section no-print">
+                    <div class="alg-label"><?php echo $is_sweet ? 'Allergens (optional · US Big 9)' : 'Allergens (optional · US Big 9)'; ?></div>
+                    <p class="hint" style="margin-top:0;"><?php echo $is_sweet ? 'Staff matrix for guest questions — leave blank if unused. Syncs house-wide.' : 'Optional staff reference; empty is fine. House-synced.'; ?></p>
+                    <div id="e-allergen-checks" class="allergen-checks"></div>
+                    <div class="field" style="margin-bottom:0;"><label><?php echo $is_sweet ? 'Allergen note (optional)' : 'Allergen note (optional)'; ?></label>
+                        <input id="e-allergen-note" maxlength="200" placeholder="<?php echo $is_sweet ? 'e.g. fried in shared oil, can omit nuts' : 'e.g. fried in shared oil, can omit nuts'; ?>">
+                    </div>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="e-cancel"><?php echo $is_sweet ? 'Cancel' : 'Cancel'; ?></button>
                     <button type="submit" class="btn btn-primary"><?php echo $is_sweet ? 'Save' : 'Save'; ?></button>
@@ -232,6 +255,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
     </div>
     <div class="toast" id="toast"><?php echo $is_sweet ? 'Saved 💾' : 'Saved'; ?></div>
     <?php include 'bottom-nav.php'; ?>
+    <script src="/shared-state.js?v=3"></script>
+    <script src="/allergen-menu-shared.js?v=1"></script>
     <script src="/food-cost-shared.js?v=2"></script>
     <script>
     (function () {
@@ -240,7 +265,27 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         const ING_KEY = 'pbj_heat_ingredients_v1';
         const isSweet = <?php echo $is_sweet ? 'true' : 'false'; ?>;
         var FC = window.PbjFoodCost;
+        var A = window.PbjAllergenMenu;
+        var allergenSync = null;
         var bucketById = {};
+        function pushAllergenOverlay() {
+            if (!A) return;
+            if (!allergenSync) {
+                allergenSync = A.wire({
+                    getState: function () { return A.loadOverlayLocal(); },
+                    setState: function (next) { A.saveOverlayLocal(next); }
+                });
+            }
+            allergenSync.push(A.loadOverlayLocal());
+        }
+        function fillAllergenEditor(it) {
+            var box = document.getElementById('e-allergen-checks');
+            if (!box || !A) return;
+            var allergens = (it && it.allergens) ? it.allergens : [];
+            var tmp = document.createElement('div');
+            tmp.innerHTML = A.renderCheckboxGrid(allergens, 'menu-e-alg');
+            box.innerHTML = tmp.firstChild ? tmp.firstChild.innerHTML : '';
+        }
             function canP(key) {
                 if (window.PbjPerms && window.PbjPerms.loaded) return window.PbjPerms.can(key);
                 return true;
@@ -523,6 +568,25 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                     '<span>' + (isSweet ? 'Contribution: ' : 'Contrib: ') + '<strong>' + (e.contrib != null ? money(e.contrib) : '—') + '</strong></span>' +
                     (e.plate && e.plate.recipe ? '<span class="muted">' + (isSweet ? 'via ' : 'via ') + esc(e.plate.recipe) + '</span>' : '') +
                     '</div>' +
+                    (function () {
+                        var algs = (it.allergens && it.allergens.length) ? it.allergens : [];
+                        var note = it.allergenNote || '';
+                        if (A && it.id) {
+                            var ov = A.loadOverlayLocal();
+                            if (ov.items && ov.items[it.id]) {
+                                if (ov.items[it.id].allergens && ov.items[it.id].allergens.length) algs = ov.items[it.id].allergens;
+                                if (ov.items[it.id].allergenNote) note = ov.items[it.id].allergenNote;
+                            }
+                        }
+                        if (!algs.length && !note) return '';
+                        var chips = algs.length
+                            ? '<div class="alg-chips">' + algs.map(function (id) {
+                                return '<span class="alg-chip">' + esc(A ? A.shortFor(id) : id) + '</span>';
+                              }).join('') + '</div>'
+                            : '';
+                        var n = note ? '<div class="alg-note">' + esc(note) + '</div>' : '';
+                        return chips + n;
+                    })() +
                     '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;">' +
                     '<button type="button" class="btn btn-small btn-ghost" data-act="edit" data-need-perm="boh.recipes.menu_edit" data-id="' + esc(it.id) + '">' + (isSweet ? 'Edit' : 'Edit') + '</button>' +
                     '<button type="button" class="btn btn-small btn-danger" data-act="del" data-need-perm="boh.recipes.menu_edit" data-id="' + esc(it.id) + '">' + (isSweet ? 'Remove' : 'Remove') + '</button>' +
@@ -563,13 +627,29 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             if (btn.dataset.act === 'del') {
                 if (!confirm(isSweet ? 'Remove this menu item?' : 'Remove this menu item?')) return;
                 state.items = state.items.filter(function (x) { return x.id !== id; });
-                save(true); render(); return;
+                save(true);
+                if (A) {
+                    A.clearItemAllergens(id);
+                    pushAllergenOverlay();
+                }
+                render(); return;
             }
             document.getElementById('e-id').value = it.id;
             document.getElementById('e-name').value = it.name || '';
             document.getElementById('e-price').value = it.price != null ? it.price : '';
             document.getElementById('e-cat').value = it.category || 'other';
             document.getElementById('e-notes').value = it.notes || '';
+            var algNote = it.allergenNote || '';
+            var algList = it.allergens || [];
+            if (A) {
+                var ov2 = A.loadOverlayLocal();
+                if (ov2.items && ov2.items[it.id]) {
+                    if (ov2.items[it.id].allergens) algList = ov2.items[it.id].allergens;
+                    if (ov2.items[it.id].allergenNote != null && ov2.items[it.id].allergenNote !== '') algNote = ov2.items[it.id].allergenNote;
+                }
+            }
+            document.getElementById('e-allergen-note').value = algNote;
+            fillAllergenEditor({ id: it.id, allergens: algList, allergenNote: algNote });
             modal.classList.add('show');
         });
 
@@ -582,7 +662,16 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             it.price = document.getElementById('e-price').value;
             it.category = document.getElementById('e-cat').value;
             it.notes = document.getElementById('e-notes').value.trim();
-            save(true); modal.classList.remove('show'); render();
+            var algNoteSave = document.getElementById('e-allergen-note').value.trim();
+            var algSave = A ? A.readCheckboxes(document.getElementById('e-allergen-checks')) : [];
+            it.allergens = algSave;
+            it.allergenNote = algNoteSave;
+            save(true);
+            if (A) {
+                A.setItemAllergens(it.id, algSave, algNoteSave, it.name);
+                pushAllergenOverlay();
+            }
+            modal.classList.remove('show'); render();
         });
         document.getElementById('e-cancel').addEventListener('click', function () { modal.classList.remove('show'); });
         modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('show'); });
@@ -622,6 +711,15 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             URL.revokeObjectURL(a.href);
         });
 
+        if (A) {
+            allergenSync = A.wire({
+                getState: function () { return A.loadOverlayLocal(); },
+                setState: function (next) {
+                    A.saveOverlayLocal(next);
+                    try { render(); } catch (e) {}
+                }
+            });
+        }
         render();
             if (window.PbjPerms && window.PbjPerms.ready) window.PbjPerms.ready.then(applyMenuPerms);
             document.addEventListener('pbj-perms-ready', applyMenuPerms);

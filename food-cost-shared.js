@@ -397,6 +397,52 @@
         return ideal;
     }
 
+
+    /**
+     * Plate / batch food cost for a recipe object (from house recipes).
+     * @returns {{ per:number, batch:number, recipe:string, portions:number, missing:number }|null}
+     */
+    function plateCostForRecipe(rec, master) {
+        if (!rec) return null;
+        master = master || loadMaster();
+        var ings = rec.ingredients || rec.ings || [];
+        if (!ings.length) return null;
+        var total = 0, missing = 0;
+        ings.forEach(function (ing) {
+            var item = findIngredient(master, ing.name || ing.ingredient);
+            var qty = parseFloat(ing.qty);
+            var cpu = costPerRecipeUnit(item);
+            if (cpu == null || isNaN(qty)) missing++;
+            else total += qty * cpu;
+        });
+        if (missing && missing === ings.length) return null;
+        if (missing > ings.length / 2) return null;
+        var portions = parseFloat(rec.portions || rec.yieldPortions || rec.servings);
+        var per = (!isNaN(portions) && portions > 0) ? total / portions : total;
+        return {
+            per: Math.round(per * 10000) / 10000,
+            batch: Math.round(total * 10000) / 10000,
+            recipe: rec.title || rec.name || '',
+            portions: portions || 1,
+            missing: missing
+        };
+    }
+
+    /**
+     * Suggested sell prices for a target food-cost band (25–30% FC).
+     * @returns {{ at25:number, at275:number, at30:number }|null}
+     */
+    function suggestedSellPrices(portionCost) {
+        var c = parseFloat(portionCost);
+        if (isNaN(c) || c < 0) return null;
+        function round2(n) { return Math.round(n * 100) / 100; }
+        return {
+            at25: round2(c / 0.25),
+            at275: round2(c / 0.275),
+            at30: round2(c / 0.30)
+        };
+    }
+
     global.PbjFoodCost = {
         RECIPE_KEY: RECIPE_KEY,
         ING_KEY: ING_KEY,
@@ -411,6 +457,8 @@
         costPerRecipeUnit: costPerRecipeUnit,
         findIngredient: findIngredient,
         plateCostForMenuId: plateCostForMenuId,
+        plateCostForRecipe: plateCostForRecipe,
+        suggestedSellPrices: suggestedSellPrices,
         findMenuItemByName: findMenuItemByName,
         loadPmix: loadPmix,
         savePmix: savePmix,
