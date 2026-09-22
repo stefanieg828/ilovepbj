@@ -335,6 +335,7 @@ $plans = pbj_plans();
         <div class="nav-actions">
             <a class="nav-link" href="#how">How it works</a>
             <a class="nav-link" href="#plans">Plans</a>
+            <a class="nav-link" href="/catering">Catering</a>
             <a class="nav-link" href="/join">I have a code</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
             <a class="btn btn-mint btn-sm" href="/register?plan=crew_10">Start free trial</a>

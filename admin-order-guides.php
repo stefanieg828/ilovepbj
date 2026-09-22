@@ -48,6 +48,22 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
         .hint { font-size: 0.95rem; opacity: 0.7; margin: 0 0 12px; line-height: 1.4; }
+        .print-only { display: none; }
+        .guide-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .vendor-sheet { width: 100%; border-collapse: collapse; font-size: 10pt; line-height: 1.25; margin: 0 0 18px; }
+        .vendor-sheet th, .vendor-sheet td { border: 1px solid #999; padding: 4px 6px; text-align: left; vertical-align: top; }
+        .vendor-sheet th { background: #e8e8e8 !important; font-weight: 700; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .vendor-sheet .num { text-align: right; white-space: nowrap; }
+        .vendor-sheet-title { font-size: 14pt; font-weight: 700; margin: 0 0 4px; }
+        .vendor-sheet-meta { font-size: 9pt; margin: 0 0 8px; opacity: 0.85; }
+        .vendor-sheet-block { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; }
+        @media print {
+            body { background: white; padding-bottom: 0; color: #000; }
+            .header { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .back-link, .toolbar, .actions-bar, .bottom-nav, #bottom-nav, nav, .toast, .card, .intro { display: none !important; }
+            .print-only { display: block !important; }
+            #vendor-print-root { display: block !important; padding: 0 8px; }
+        }
     </style>
 </head>
 <body>
@@ -64,6 +80,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         </div>
         <div class="toolbar">
             <button type="button" class="btn btn-primary" id="pull-low"><?php echo $is_sweet ? 'Pull below-par items' : 'Pull below-par items'; ?></button>
+            <button type="button" class="btn btn-primary" id="export-draft-csv"><?php echo $is_sweet ? 'Vendor CSV 📥' : 'Vendor CSV'; ?></button>
+            <button type="button" class="btn btn-secondary" id="print-draft-btn"><?php echo $is_sweet ? 'Print / PDF' : 'Print / PDF'; ?></button>
             <a href="/admin/auto-order" class="btn btn-secondary"><?php echo $is_sweet ? 'Auto-Order' : 'Auto-Order'; ?></a>
             <a href="/admin/count" class="btn btn-secondary"><?php echo $is_sweet ? 'Count Stock' : 'Count Stock'; ?></a>
             <a href="/admin/product-setup" class="btn btn-secondary"><?php echo $is_sweet ? 'Product Setup' : 'Product Setup'; ?></a>
@@ -79,7 +97,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <div class="field-row" style="margin-top:12px;">
                 <div class="field"><label><?php echo $is_sweet ? 'Item' : 'Item'; ?></label><input id="l-name" placeholder="<?php echo $is_sweet ? 'Ingredient / product' : 'Item'; ?>"></div>
                 <div class="field"><label><?php echo $is_sweet ? 'Qty' : 'Qty'; ?></label><input id="l-qty" type="number" step="any" min="0"></div>
-                <div class="field"><label><?php echo $is_sweet ? 'Unit' : 'Unit'; ?></label><input id="l-unit" placeholder="case, lb…"></div>
+                <div class="field"><label><?php echo $is_sweet ? 'Unit' : 'Unit'; ?></label><input id="l-unit" placeholder="case or each"></div>
             </div>
             <button type="button" class="btn btn-secondary" id="add-line" style="width:100%;margin-bottom:10px;"><?php echo $is_sweet ? '+ Add line' : '+ Add line'; ?></button>
             <button type="button" class="btn btn-primary" id="save-guide" style="width:100%;"><?php echo $is_sweet ? 'Save order guide ✨' : 'Save order guide'; ?></button>
@@ -93,6 +111,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <a href="/admin/auto-order" class="btn btn-primary"><?php echo $is_sweet ? 'Auto-Order' : 'Auto-Order'; ?></a>
         </div>
     </div>
+    <div class="print-only" id="vendor-print-root" aria-hidden="true"></div>
     <div class="toast" id="toast"><?php echo $is_sweet ? 'Saved 💾' : 'Saved'; ?></div>
     <?php include 'bottom-nav.php'; ?>
     <script>
@@ -171,7 +190,11 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 return '<div class="guide"><h3>' + esc(g.name) + '</h3>' +
                     '<div class="meta">' + esc(when) + (g.vendor ? ' · ' + esc(g.vendor) : '') + ' · ' + (g.lines || []).length + ' items</div>' +
                     lines +
-                    '<button type="button" class="btn btn-small btn-danger" style="margin-top:10px;" data-del="' + esc(g.id) + '">' + (isSweet ? 'Remove guide' : 'Remove guide') + '</button></div>';
+                    '<div class="guide-actions">' +
+                    '<button type="button" class="btn btn-small btn-ghost" data-export="' + esc(g.id) + '">' + (isSweet ? 'Vendor CSV' : 'Vendor CSV') + '</button>' +
+                    '<button type="button" class="btn btn-small btn-ghost" data-print="' + esc(g.id) + '">' + (isSweet ? 'Print / PDF' : 'Print / PDF') + '</button>' +
+                    '<button type="button" class="btn btn-small btn-danger" data-del="' + esc(g.id) + '">' + (isSweet ? 'Remove guide' : 'Remove guide') + '</button>' +
+                    '</div></div>';
             }).join('');
         }
 
@@ -200,15 +223,17 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                         if (!isNaN(pack) && pack > 0) need = Math.ceil(need / pack) * pack;
                     }
                     need = Math.round(need * 100) / 100;
-                    var orderAs = parBy === 'case' ? (need === 1 ? 'case' : 'cases') : 'each';
                     var exists = draft.some(function (l) { return l.name.toLowerCase() === (item.name || key).toLowerCase(); });
                     if (!exists) {
                         draft.push({
                             name: item.name || key,
                             qty: need,
-                            unit: orderAs,
+                            unit: parBy, // case | each (canonical for vendor export)
                             vendor: itemVendor,
-                            parBy: parBy
+                            parBy: parBy,
+                            onHand: isNaN(onHand) ? '' : onHand,
+                            par: isNaN(par) ? '' : par,
+                            sku: item.sku || ''
                         });
                         added++;
                     }
@@ -223,10 +248,18 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         document.getElementById('add-line').addEventListener('click', function () {
             var name = document.getElementById('l-name').value.trim();
             if (!name) return;
+            var unitRaw = document.getElementById('l-unit').value.trim().toLowerCase();
+            var unitCanon = unitRaw.indexOf('case') === 0 ? 'case' : (unitRaw ? unitRaw : 'each');
+            if (unitCanon !== 'case' && unitCanon !== 'each') {
+                // keep typed unit for display, but vendor export will map non-case → each
+                unitCanon = unitRaw || 'each';
+            }
             draft.push({
                 name: name,
                 qty: document.getElementById('l-qty').value || '',
-                unit: document.getElementById('l-unit').value.trim()
+                unit: unitCanon.indexOf('case') === 0 ? 'case' : (unitCanon === 'each' || !unitCanon ? 'each' : unitCanon),
+                parBy: unitCanon.indexOf('case') === 0 ? 'case' : 'each',
+                vendor: document.getElementById('g-vendor').value.trim()
             });
             document.getElementById('l-name').value = '';
             document.getElementById('l-qty').value = '';
@@ -261,10 +294,150 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             renderSaved();
         });
 
+
+        function orderUnitCanon(line) {
+            var raw = String((line && (line.parBy || line.unit)) || 'each').toLowerCase();
+            if (raw.indexOf('case') === 0) return 'case';
+            return 'each';
+        }
+        function csvEscape(c) {
+            var s = String(c == null ? '' : c);
+            if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+        function guideLinesForExport(guideOrLines, fallbackVendor) {
+            var lines = Array.isArray(guideOrLines) ? guideOrLines : (guideOrLines && guideOrLines.lines) || [];
+            var guideVendor = (!Array.isArray(guideOrLines) && guideOrLines && guideOrLines.vendor) ? guideOrLines.vendor : (fallbackVendor || '');
+            return lines.map(function (l) {
+                return {
+                    vendor: l.vendor || guideVendor || (isSweet ? 'Unassigned vendor' : 'Unassigned vendor'),
+                    name: l.name || '',
+                    sku: l.sku || '',
+                    qty: l.qty,
+                    unit: orderUnitCanon(l),
+                    onHand: l.onHand != null && l.onHand !== '' ? l.onHand : '',
+                    par: l.par != null && l.par !== '' ? l.par : ''
+                };
+            });
+        }
+        function linesToVendorCsv(lines) {
+            var header = ['Vendor', 'Item', 'SKU', 'OrderQty', 'OrderUnit', 'OnHand', 'Par'];
+            var rows = [header.join(',')];
+            var sorted = (lines || []).slice().sort(function (a, b) {
+                var va = String(a.vendor || '').localeCompare(String(b.vendor || ''));
+                if (va) return va;
+                return String(a.name || '').localeCompare(String(b.name || ''));
+            });
+            sorted.forEach(function (l) {
+                rows.push([l.vendor, l.name, l.sku || '', l.qty, orderUnitCanon(l), l.onHand, l.par].map(csvEscape).join(','));
+            });
+            return '\uFEFF' + rows.join('\r\n');
+        }
+        function downloadCsv(filename, csv) {
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        function buildVendorPrintHtml(lines, title) {
+            var date = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            var byVendor = {};
+            (lines || []).forEach(function (l) {
+                var v = l.vendor || (isSweet ? 'Unassigned vendor' : 'Unassigned vendor');
+                if (!byVendor[v]) byVendor[v] = [];
+                byVendor[v].push(l);
+            });
+            var keys = Object.keys(byVendor).sort();
+            if (!keys.length) return '<p>' + (isSweet ? 'Nothing to print' : 'Nothing to print') + '</p>';
+            var html = '<div class="vendor-sheet-meta">' + esc(title || (isSweet ? 'Vendor order guide' : 'Vendor order guide')) + ' · ' + esc(date) + ' · ilovepbj ops</div>';
+            keys.forEach(function (vendor) {
+                var rows = byVendor[vendor].map(function (l) {
+                    return '<tr>' +
+                        '<td>' + esc(l.name) + '</td>' +
+                        '<td>' + esc(l.sku || '') + '</td>' +
+                        '<td class="num">' + esc(l.qty) + '</td>' +
+                        '<td>' + esc(orderUnitCanon(l)) + '</td>' +
+                        '<td class="num">' + esc(l.onHand) + '</td>' +
+                        '<td class="num">' + esc(l.par) + '</td>' +
+                    '</tr>';
+                }).join('');
+                html += '<div class="vendor-sheet-block">' +
+                    '<div class="vendor-sheet-title">' + esc(vendor) + '</div>' +
+                    '<table class="vendor-sheet"><thead><tr>' +
+                    '<th>Item</th><th>SKU</th><th>Qty</th><th>Order unit</th><th>On hand</th><th>Par</th>' +
+                    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+            });
+            return html;
+        }
+        function prepareVendorPrint(lines, title) {
+            var root = document.getElementById('vendor-print-root');
+            if (!root) return;
+            root.innerHTML = buildVendorPrintHtml(lines, title);
+        }
+
+        document.getElementById('export-draft-csv').addEventListener('click', function () {
+            if (!canP('admin.inventory.view') && !canP('admin.inventory.edit')) {
+                alert(isSweet ? 'No permission to view inventory' : 'No permission');
+                return;
+            }
+            if (!draft.length) {
+                alert(isSweet ? 'Add or pull lines first' : 'Nothing to export');
+                return;
+            }
+            var vendor = document.getElementById('g-vendor').value.trim();
+            var lines = guideLinesForExport(draft, vendor);
+            var stamp = new Date().toISOString().slice(0, 10);
+            downloadCsv('pbj-order-guide-' + stamp + '.csv', linesToVendorCsv(lines));
+            var el = document.getElementById('toast');
+            el.textContent = isSweet ? 'Vendor CSV ready 📥' : 'CSV downloaded';
+            el.classList.add('show'); setTimeout(function () { el.classList.remove('show'); }, 1200);
+        });
+
+        document.getElementById('print-draft-btn').addEventListener('click', function () {
+            if (!draft.length) {
+                alert(isSweet ? 'Add or pull lines first' : 'Nothing to print');
+                return;
+            }
+            var vendor = document.getElementById('g-vendor').value.trim();
+            var name = document.getElementById('g-name').value.trim() || (isSweet ? 'Order guide draft' : 'Order guide draft');
+            prepareVendorPrint(guideLinesForExport(draft, vendor), name);
+            window.print();
+        });
+
         document.getElementById('saved').addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-del]'); if (!btn) return;
-            state.guides = state.guides.filter(function (g) { return g.id !== btn.dataset.del; });
-            save(true); renderSaved();
+            var del = e.target.closest('[data-del]');
+            if (del) {
+                state.guides = state.guides.filter(function (g) { return g.id !== del.dataset.del; });
+                save(true); renderSaved();
+                return;
+            }
+            var exp = e.target.closest('[data-export]');
+            if (exp) {
+                var g = state.guides.find(function (x) { return x.id === exp.dataset.export; });
+                if (!g) return;
+                var lines = guideLinesForExport(g);
+                if (!lines.length) { alert(isSweet ? 'Guide is empty' : 'Guide is empty'); return; }
+                var safe = String(g.name || 'guide').replace(/[^\\w\\-]+/g, '-').slice(0, 40);
+                downloadCsv('pbj-order-guide-' + safe + '.csv', linesToVendorCsv(lines));
+                var el = document.getElementById('toast');
+                el.textContent = isSweet ? 'Vendor CSV ready 📥' : 'CSV downloaded';
+                el.classList.add('show'); setTimeout(function () { el.classList.remove('show'); }, 1200);
+                return;
+            }
+            var prv = e.target.closest('[data-print]');
+            if (prv) {
+                var gp = state.guides.find(function (x) { return x.id === prv.dataset.print; });
+                if (!gp) return;
+                var plines = guideLinesForExport(gp);
+                if (!plines.length) { alert(isSweet ? 'Guide is empty' : 'Guide is empty'); return; }
+                prepareVendorPrint(plines, gp.name || 'Order guide');
+                window.print();
+            }
         });
 
         renderDraft();
