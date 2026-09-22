@@ -565,7 +565,7 @@ $plans = pbj_plans();
 
     <footer class="footer">
         <p>ilovepbj ops · restaurant ops with heart</p>
-        <p><a href="/login">Log in</a> · <a href="/demo">Peek free demo</a> · <a href="/register?mode=playground">Create a demo login</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a> · <a href="/food-cost-calculator">Food cost calculator</a> · <a href="/checklists">Checklists</a></p>
+        <p><a href="/login">Log in</a> · <a href="/demo">Peek free demo</a> · <a href="/register?mode=playground">Create a demo login</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a> · <a href="/food-cost-calculator">Food cost calculator</a> · <a href="/growth/gulf-one-pager">Print Gulf Coast leave-behind</a> · <a href="/checklists">Checklists</a></p>
         <p>
             <a href="/privacy">Privacy</a> ·
             <a href="/terms">Terms</a> ·

@@ -10,3 +10,6 @@ Also wired in PHP: config.php pbj_page_routes() maps
 demo-peek.php => /demo
 
 Do not expose /sales playground via this path. /demo only joins FREE-DEMO.
+Also shipping with growth kit:
+    location = /growth/gulf-one-pager { rewrite ^ /growth-gulf-one-pager.php last; }
+See NGINX-GROWTH-ROUTE.txt

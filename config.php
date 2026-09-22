@@ -354,6 +354,7 @@ function pbj_enforce_access_gate(): void {
         'demo-peek.php',
         'food-cost-calculator.php',
         'checklists.php',
+        'growth-gulf-one-pager.php',
         'logout.php',
         'waiting.php',
         'choose-theme.php',
@@ -2125,6 +2126,7 @@ function pbj_page_routes(): array {
         'food-cost-calculator.php' => '/food-cost-calculator',
         'checklists.php' => '/checklists',
         'demo-peek.php' => '/demo',
+        'growth-gulf-one-pager.php' => '/growth/gulf-one-pager',
         // Messages (Jelly) children
         'jelly-announcements.php' => '/messages/announcements',
         'jelly-broadcasts.php' => '/messages/broadcasts',
