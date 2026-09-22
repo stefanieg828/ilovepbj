@@ -351,6 +351,9 @@ function pbj_enforce_access_gate(): void {
         'login.php',
         'register.php',
         'join.php',
+        'demo-peek.php',
+        'food-cost-calculator.php',
+        'checklists.php',
         'logout.php',
         'waiting.php',
         'choose-theme.php',
@@ -1753,10 +1756,25 @@ function pbj_find_restaurant_by_code(PDO $pdo, string $code): ?array {
     if ($code === '') {
         return null;
     }
+    // Free demo public code FREE-DEMO also accepts legacy DEMO-PBJ (and vice versa)
+    $candidates = [$code];
+    if (function_exists('pbj_demo_invite_codes')) {
+        $demoCodes = pbj_demo_invite_codes();
+        if (in_array($code, $demoCodes, true)) {
+            $candidates = $demoCodes;
+        }
+    } elseif ($code === 'FREE-DEMO' || $code === 'DEMO-PBJ') {
+        $candidates = ['FREE-DEMO', 'DEMO-PBJ'];
+    }
     $stmt = $pdo->prepare('SELECT * FROM restaurants WHERE UPPER(REPLACE(invite_code, " ", "")) = ? LIMIT 1');
-    $stmt->execute([$code]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $row ?: null;
+    foreach ($candidates as $candidate) {
+        $stmt->execute([$candidate]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return $row;
+        }
+    }
+    return null;
 }
 
 function pbj_user_restaurants(PDO $pdo, int $userId): array {
@@ -2107,6 +2125,9 @@ function pbj_page_routes(): array {
         'refunds.php' => '/refunds',
         'approve-users.php' => '/approve-users',
         'index.php' => '/',
+        'food-cost-calculator.php' => '/food-cost-calculator',
+        'checklists.php' => '/checklists',
+        'demo-peek.php' => '/demo',
         // Messages (Jelly) children
         'jelly-announcements.php' => '/messages/announcements',
         'jelly-broadcasts.php' => '/messages/broadcasts',
@@ -4750,7 +4771,7 @@ function pbj_remove_restaurant_member(PDO $pdo, int $restaurantId, int $userId, 
 }
 
 /**
- * True for demo / sales playground kitchens (DEMO-PBJ, SALES-PBJ, or flagged settings).
+ * True for demo / sales playground kitchens (FREE-DEMO / DEMO-PBJ, SALES-PBJ, or flagged settings).
  * Real paid / free houses return false even when seats are unlimited.
  */
 function pbj_restaurant_is_playground(PDO $pdo, int $restaurantId): bool {
@@ -4767,7 +4788,7 @@ function pbj_restaurant_is_playground(PDO $pdo, int $restaurantId): bool {
         $code = strtoupper(trim((string) $stmt->fetchColumn()));
         $codes = function_exists('pbj_playground_invite_codes')
             ? pbj_playground_invite_codes()
-            : ['DEMO-PBJ', 'SALES-PBJ'];
+            : ['FREE-DEMO', 'DEMO-PBJ', 'SALES-PBJ'];
         if ($code !== '' && in_array($code, $codes, true)) {
             return true;
         }
@@ -4810,7 +4831,7 @@ function pbj_detach_user_from_playgrounds(PDO $pdo, int $userId): int {
         }
         $codes = function_exists('pbj_playground_invite_codes')
             ? pbj_playground_invite_codes()
-            : ['DEMO-PBJ', 'SALES-PBJ'];
+            : ['FREE-DEMO', 'DEMO-PBJ', 'SALES-PBJ'];
         foreach ($codes as $code) {
             $stmt = $pdo->prepare('SELECT id FROM restaurants WHERE UPPER(invite_code) = ?');
             $stmt->execute([strtoupper((string) $code)]);
@@ -4883,7 +4904,7 @@ function pbj_user_is_on_paying_house(PDO $pdo, int $userId): bool {
             $code = strtoupper(trim((string) ($r['invite_code'] ?? '')));
             $playgroundCodes = function_exists('pbj_playground_invite_codes')
                 ? pbj_playground_invite_codes()
-                : ['DEMO-PBJ', 'SALES-PBJ'];
+                : ['FREE-DEMO', 'DEMO-PBJ', 'SALES-PBJ'];
             if (in_array($code, $playgroundCodes, true)) {
                 continue;
             }
