@@ -2395,6 +2395,7 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
             </div>
             <div class="daily-pulse-links">
                 <a href="/admin/pnl"><?php echo $fun_names ? 'P&amp;L' : 'P&amp;L'; ?></a>
+                <a href="/admin/reports/weekly-snapshot"><?php echo $fun_names ? 'Weekly snapshot' : 'Weekly snapshot'; ?></a>
                 <a href="/admin/auto-order"><?php echo $fun_names ? 'Auto-Order' : 'Auto-Order'; ?></a>
                 <a href="/admin/pos-connect"><?php echo $fun_names ? 'Connect POS' : 'Connect POS'; ?></a>
                 <a href="/admin/labor"><?php echo $fun_names ? 'Labor' : 'Labor'; ?></a>

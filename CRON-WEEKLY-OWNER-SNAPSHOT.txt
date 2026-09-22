@@ -1,0 +1,18 @@
+ilovepbj — weekly owner snapshot email cron
+==========================================
+
+Script: /var/www/html/cli/send-weekly-owner-snapshots.php
+
+Opt-in: restaurant_settings.settings_json.weeklyOwnerSnapshotEmail = true
+        (toggle on /admin/reports/weekly-snapshot)
+
+Suggested cron (Monday 7:00 America/Chicago):
+
+  # /etc/cron.d/ilovepbj-weekly-snapshot
+  MAILTO=""
+  0 7 * * 1 root TZ=America/Chicago /usr/bin/php /var/www/html/cli/send-weekly-owner-snapshots.php >> /var/log/ilovepbj-weekly-snapshot.log 2>&1
+
+Dry-run:
+  php /var/www/html/cli/send-weekly-owner-snapshots.php --dry-run
+
+Requires SMTP secrets (same as trial reminders). In-app "Email me this" works when SMTP is configured.

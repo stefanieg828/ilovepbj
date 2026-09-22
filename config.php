@@ -2155,6 +2155,7 @@ function pbj_page_routes(): array {
         'admin-labor.php' => '/admin/labor',
         'admin-cash.php' => '/admin/cash',
         'admin-trends.php' => '/admin/trends',
+        'admin-weekly-snapshot.php' => '/admin/reports/weekly-snapshot',
         'admin-pnl.php' => '/admin/pnl',
         'admin-comps.php' => '/admin/comps',
         'admin-costing.php' => '/admin/costing',
