@@ -1,9 +1,9 @@
 <?php
 /**
- * Playground houses (Sales Showcase + ilovepbj Playground) — full access,
+ * Playground houses (Sales Showcase + ilovepbj Free Demo) — full access,
  * restore to gold-master starters on demand + nightly.
  *
- * Codes: SALES-PBJ · DEMO-PBJ
+ * Codes: SALES-PBJ · FREE-DEMO (legacy alias DEMO-PBJ)
  * Gold master lives outside the live DB so tester deletes never eat starters.
  */
 if (!defined('PBJ_SALES_PLAYGROUND_LOADED')) {
@@ -12,14 +12,24 @@ if (!defined('PBJ_SALES_PLAYGROUND_LOADED')) {
 
 define('PBJ_SALES_INVITE_CODE', 'SALES-PBJ');
 define('PBJ_SALES_HOUSE_NAME', 'Sales Showcase');
-define('PBJ_DEMO_INVITE_CODE', 'DEMO-PBJ');
-define('PBJ_DEMO_HOUSE_NAME', 'ilovepbj Playground');
+define('PBJ_DEMO_INVITE_CODE', 'FREE-DEMO');
+/** Legacy public code — still accepted for lookups until DB is updated. */
+define('PBJ_DEMO_INVITE_CODE_LEGACY', 'DEMO-PBJ');
+define('PBJ_DEMO_HOUSE_NAME', 'ilovepbj Free Demo');
 /** Timezone for “end of day” reset (2:00 AM local). */
 define('PBJ_SALES_TIMEZONE', 'America/New_York');
 
-/** Invite codes that always support starter reset. */
+/** Public + legacy invite codes for the free demo house. */
+function pbj_demo_invite_codes(): array {
+    return [PBJ_DEMO_INVITE_CODE, PBJ_DEMO_INVITE_CODE_LEGACY];
+}
+
+/** Invite codes that always support starter reset (sales + free demo aliases). */
 function pbj_playground_invite_codes(): array {
-    return [PBJ_SALES_INVITE_CODE, PBJ_DEMO_INVITE_CODE];
+    return array_values(array_unique(array_merge(
+        [PBJ_SALES_INVITE_CODE],
+        pbj_demo_invite_codes()
+    )));
 }
 
 function pbj_sales_snapshot_dir(): string {
@@ -172,12 +182,20 @@ function pbj_sales_bump_epoch(PDO $pdo, int $restaurantId): int {
 }
 
 /**
- * Ensure DEMO-PBJ (personal playground) is flagged for unlimited + starter reset.
+ * Ensure FREE-DEMO (personal free demo; legacy DEMO-PBJ) is flagged for unlimited + starter reset.
  */
 function pbj_ensure_demo_playground(PDO $pdo): int {
-    $stmt = $pdo->prepare('SELECT id FROM restaurants WHERE UPPER(invite_code) = ? LIMIT 1');
-    $stmt->execute([PBJ_DEMO_INVITE_CODE]);
-    $id = (int) ($stmt->fetchColumn() ?: 0);
+    $id = 0;
+    $matchedCode = '';
+    foreach (pbj_demo_invite_codes() as $demoCode) {
+        $stmt = $pdo->prepare('SELECT id FROM restaurants WHERE UPPER(invite_code) = ? LIMIT 1');
+        $stmt->execute([$demoCode]);
+        $id = (int) ($stmt->fetchColumn() ?: 0);
+        if ($id > 0) {
+            $matchedCode = $demoCode;
+            break;
+        }
+    }
     if ($id <= 0) {
         $ownerId = 1;
         try {
@@ -197,13 +215,19 @@ function pbj_ensure_demo_playground(PDO $pdo): int {
         $pdo->prepare('INSERT INTO restaurants (name, owner_id, invite_code) VALUES (?, ?, ?)')
             ->execute([PBJ_DEMO_HOUSE_NAME, $ownerId, PBJ_DEMO_INVITE_CODE]);
         $id = (int) $pdo->lastInsertId();
-        pbj_sales_log("created demo playground id={$id}");
+        pbj_sales_log("created free demo house id={$id} code=" . PBJ_DEMO_INVITE_CODE);
     } else {
-        $pdo->prepare('UPDATE restaurants SET name = ? WHERE id = ? AND (name = ? OR name = ? OR name = ?)')
-            ->execute([PBJ_DEMO_HOUSE_NAME, $id, 'Demo Kitchen', 'DEMO Kitchen', '']);
-        // Always keep the friendly name if still demo-ish
-        $pdo->prepare('UPDATE restaurants SET name = ? WHERE id = ? AND UPPER(invite_code) = ?')
-            ->execute([PBJ_DEMO_HOUSE_NAME, $id, PBJ_DEMO_INVITE_CODE]);
+        $pdo->prepare('UPDATE restaurants SET name = ? WHERE id = ? AND (name = ? OR name = ? OR name = ? OR name = ?)')
+            ->execute([PBJ_DEMO_HOUSE_NAME, $id, 'Demo Kitchen', 'DEMO Kitchen', 'ilovepbj Playground', '']);
+        // Prefer public FREE-DEMO code; leave legacy DEMO-PBJ until ops updates DB if needed
+        if ($matchedCode !== '' && $matchedCode !== PBJ_DEMO_INVITE_CODE) {
+            // Keep legacy row findable; name still shows Free Demo
+            $pdo->prepare('UPDATE restaurants SET name = ? WHERE id = ?')
+                ->execute([PBJ_DEMO_HOUSE_NAME, $id]);
+        } else {
+            $pdo->prepare('UPDATE restaurants SET name = ? WHERE id = ? AND UPPER(invite_code) = ?')
+                ->execute([PBJ_DEMO_HOUSE_NAME, $id, PBJ_DEMO_INVITE_CODE]);
+        }
     }
 
     $stmt = $pdo->prepare('SELECT settings_json FROM restaurant_settings WHERE restaurant_id = ?');
@@ -496,7 +520,7 @@ function pbj_sales_save_starters_from_restaurant(PDO $pdo, int $sourceRestaurant
         'saved_at' => date('c'),
         'source_restaurant_id' => $sourceRestaurantId,
         'keys' => $keys,
-        'note' => 'Gold master for DEMO-PBJ + SALES-PBJ. Reset never edits these files — only live house rows.',
+        'note' => 'Gold master for FREE-DEMO (+ legacy DEMO-PBJ) + SALES-PBJ. Reset never edits these files — only live house rows.',
     ], JSON_PRETTY_PRINT));
 
     pbj_sales_log("saved gold master: {$keys} starter keys from restaurant {$sourceRestaurantId}");

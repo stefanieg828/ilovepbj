@@ -1,0 +1,13 @@
+ilovepbj growth QR targets
+=========================
+Primary (Peek, no signup): https://ilovepbj.shop/demo
+Secondary (food cost):     https://ilovepbj.shop/food-cost-calculator
+
+Files:
+  assets/growth/qr-demo.png              — plain QR → primary
+  assets/growth/scan-to-try-qr.png       — branded sticker → primary
+  assets/growth/playground-signup-qr.png — same as sticker (legacy name)
+  uploads/docs/qr-demo.png / scan-to-try-qr.png — print copies
+
+Regenerate:
+  /workspace/qr-venv/bin/python cli/generate-growth-qr.py

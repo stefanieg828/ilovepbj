@@ -1,0 +1,15 @@
+ilovepbj — nginx pretty URL for Gulf Coast leave-behind
+=======================================================
+
+Add next to other exact-match rewrites (demo, food-cost-calculator, etc.):
+
+    location = /growth/gulf-one-pager { rewrite ^ /growth-gulf-one-pager.php last; }
+
+Also wired in PHP: config.php pbj_page_routes() maps
+growth-gulf-one-pager.php => /growth/gulf-one-pager
+
+Print / PDF: open https://ilovepbj.shop/growth/gulf-one-pager → Print
+Static twin: /uploads/docs/gulf-coast-one-pager.html
+QR assets:   /assets/growth/qr-demo.png  (→ https://ilovepbj.shop/demo)
+             /assets/growth/scan-to-try-qr.png
+Regenerate:  /workspace/qr-venv/bin/python cli/generate-growth-qr.py
