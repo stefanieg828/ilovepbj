@@ -1595,6 +1595,65 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
             <?php endif; ?>
         }
         .theme-quick-more:hover { opacity: 0.88; }
+
+        /* —— First 10 minutes guided path —— */
+        .pbj-10min-wrap { margin: 0 auto 16px; max-width: 640px; }
+        .pbj-10min-wrap[hidden] { display: none !important; }
+        .pbj-10min-card {
+            background: white; border-radius: 18px; padding: 16px 16px 14px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 2px dashed #F3C5CC;
+        }
+        body:not(.theme-sweet) .pbj-10min-card { border-color: #C5D0DE; }
+        .pbj-10min-head { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+        .pbj-10min-kicker { margin: 0; font-size: 0.85rem; opacity: 0.7; letter-spacing: 0.02em; }
+        .pbj-10min-title { margin: 4px 0 0; font-size: 1.15rem; line-height: 1.3; font-weight: 700;
+            <?php if ($fun_names): ?>color: #E55163;<?php else: ?>color: inherit;<?php endif; ?> }
+        .pbj-10min-meta { margin: 4px 0 0; font-size: 0.85rem; opacity: 0.7; }
+        .pbj-10min-x {
+            border: none; background: transparent; cursor: pointer; font-size: 1.1rem;
+            opacity: 0.55; padding: 4px 8px; border-radius: 10px; line-height: 1;
+        }
+        .pbj-10min-x:hover { opacity: 1; background: rgba(0,0,0,0.05); }
+        .pbj-10min-steps { display: grid; gap: 8px; margin-top: 12px; }
+        .pbj-10min-step {
+            display: flex; gap: 10px; align-items: flex-start; text-decoration: none; color: inherit;
+            padding: 10px 12px; border-radius: 14px; background: #FFF8F9; border: 1px solid #F3E8DD;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        body:not(.theme-sweet) .pbj-10min-step { background: #F7F9FC; border-color: #D8E0EA; }
+        .pbj-10min-step:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .pbj-10min-step.is-done { opacity: 0.72; }
+        .pbj-10min-step.is-next { border-color: #E55163; box-shadow: 0 0 0 1px rgba(229,81,99,0.25); }
+        body:not(.theme-sweet) .pbj-10min-step.is-next { border-color: #1A2A44; box-shadow: 0 0 0 1px rgba(26,42,68,0.2); }
+        .pbj-10min-num {
+            width: 28px; height: 28px; min-width: 28px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; font-size: 0.9rem;
+            background: #E55163; color: white;
+        }
+        body:not(.theme-sweet) .pbj-10min-num { background: #1A2A44; }
+        .pbj-10min-step.is-done .pbj-10min-num { background: #2E7D32; }
+        .pbj-10min-step-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .pbj-10min-step-body strong { font-size: 1rem; }
+        .pbj-10min-hint { font-size: 0.85rem; opacity: 0.75; line-height: 1.35; }
+        .pbj-10min-foot { margin-top: 12px; display: flex; justify-content: center; }
+        .pbj-10min-cta {
+            display: inline-block; text-decoration: none; border: none; cursor: pointer;
+            border-radius: 14px; padding: 12px 18px; font-size: 1rem; font-weight: 700;
+            background: #E55163; color: white;
+            <?php if ($fun_names): ?>font-family: 'DreamingOutLoudPro', serif;<?php endif; ?>
+        }
+        body:not(.theme-sweet) .pbj-10min-cta { background: #1A2A44; }
+        .pbj-10min-cta:hover { filter: brightness(1.05); }
+        .pbj-10min-page-hint {
+            position: sticky; top: 0; z-index: 40; margin: 0; padding: 10px 14px;
+            text-align: center; font-size: 0.95rem; line-height: 1.4;
+            background: #FFF5F6; border-bottom: 1px solid #F3C5CC;
+        }
+        body:not(.theme-sweet) .pbj-10min-page-hint { background: #EEF2F8; border-bottom-color: #C5D0DE; }
+        .pbj-10min-page-hint a { font-weight: 700; margin-left: 6px; }
+
+
         .welcome-banner {
             <?php if ($is_neon): ?>
                 background: #141414;
@@ -2101,9 +2160,26 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
         $isJoined = !empty($_GET['joined']);
         $isIndividual = !empty($_GET['individual']);
         $isTrialWelcome = !empty($_GET['trial']);
+        $isDemoGuest = !empty($_SESSION['demo_guest']) || !empty($_GET['peek']);
+        $isPlaygroundWelcome = !empty($_GET['playground']);
         $dashTrial = null;
         if (function_exists('pbj_trial_info') && !empty($_SESSION['user_id'])) {
             $dashTrial = pbj_trial_info($pdo, (int) $_SESSION['user_id']);
+        }
+        $showFirst10Path = $isDemoGuest || $isPlaygroundWelcome || $isTrialWelcome
+            || (!empty($dashTrial['active']) && empty($dashTrial['paid']));
+        // Prefs may already dismiss — client also hides; this just gates first paint.
+        if ($showFirst10Path && !empty($_SESSION['user_id']) && function_exists('pbj_load_user_prefs')) {
+            try {
+                $obPrefs = pbj_load_user_prefs($pdo, (int) $_SESSION['user_id']);
+                $ob = isset($obPrefs['onboarding_10min']) && is_array($obPrefs['onboarding_10min'])
+                    ? $obPrefs['onboarding_10min'] : null;
+                if ($ob && (!empty($ob['dismissed']) || !empty($ob['completed']))) {
+                    $showFirst10Path = false;
+                }
+            } catch (Throwable $e) {
+                // keep showing for audience
+            }
         }
         $showApproveLink = function_exists('pbj_is_platform_admin') && pbj_is_platform_admin($_SESSION['email'] ?? '');
         if ($showApproveLink && empty($_SESSION['email'])) {
@@ -2166,6 +2242,19 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
         <div class="urban-badge">🏙️ Modern Urban Edge</div>
         <?php elseif ($is_coffee): ?>
         <div class="coffee-badge">☕ Coffee Shop Cozy</div>
+        <?php endif; ?>
+        <?php if ($isDemoGuest): ?>
+        <div class="welcome-banner">
+            <strong><?php echo $fun_names ? 'You’re peeking the free demo 👀' : 'You’re peeking the free demo.'; ?></strong><br>
+            <?php echo $fun_names
+                ? 'No signup — explore FREE-DEMO (resets nightly). When you’re ready, create a real account so your stuff sticks.'
+                : 'Guest peek of FREE-DEMO (resets nightly). Create a real account when you want to keep your work.'; ?>
+            <div style="margin-top:10px;font-size:0.95rem;opacity:0.85;">
+                <a href="/register?mode=playground"><?php echo $fun_names ? 'Create a demo login' : 'Create a demo login'; ?></a>
+                ·
+                <a href="/register?plan=crew_10"><?php echo $fun_names ? 'Start a free trial house' : 'Start free trial'; ?></a>
+            </div>
+        </div>
         <?php endif; ?>
         <?php if ($isWelcome || $isJoined || $welcomeCode !== ''): ?>
         <div class="welcome-banner">
@@ -2243,6 +2332,11 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
                 echo 'What would you like to do today?';
             }
         ?></p>
+
+
+        <?php if (!empty($showFirst10Path)): ?>
+        <div class="pbj-10min-wrap" id="pbj-10min-root" data-audience="1" data-guest="<?php echo $isDemoGuest ? '1' : '0'; ?>" data-sweet="<?php echo $fun_names ? '1' : '0'; ?>"></div>
+        <?php endif; ?>
 
         <div class="dash-tiles-bar" id="dash-tiles-bar">
             <button type="button" class="dash-tiles-edit-btn" id="dash-tiles-edit-btn" aria-pressed="false">
@@ -2343,6 +2437,9 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
             ['id' => 'temps', 'group' => 'boh', 'href' => '/BOH/temps', 'label' => 'Temps & Safety', 'slot' => 'the-heat/temps', 'emoji' => '🌡️'],
             ['id' => 'recipes', 'group' => 'boh', 'href' => '/BOH/recipes', 'label' => 'Menu & Recipes', 'slot' => 'the-heat/menu-recipes', 'emoji' => '📖'],
             ['id' => 'tools', 'group' => 'boh', 'href' => '/BOH/tools', 'label' => 'Quick Tools', 'slot' => 'the-heat/quick-tools', 'emoji' => '🛠️'],
+            ['id' => '86-board', 'group' => 'boh', 'href' => '/BOH/86', 'label' => '86 Board', 'slot' => 'recipes-hub/86-board', 'emoji' => '🚫'],
+            ['id' => '86-display', 'group' => 'boh', 'href' => '/BOH/86/display', 'label' => '86 Kitchen Display', 'slot' => 'recipes-hub/86-display', 'emoji' => '📺'],
+            ['id' => 'allergens', 'group' => 'boh', 'href' => '/BOH/allergens', 'label' => 'Allergen Menu', 'slot' => 'recipes-hub/allergen-menu', 'emoji' => '⚠️'],
             ['id' => 'foh-open', 'group' => 'foh', 'href' => '/FOH/opening-closing', 'label' => 'FOH Open / Close', 'slot' => 'showtime/opening-closing', 'emoji' => '🔑'],
             ['id' => 'sidework', 'group' => 'foh', 'href' => '/FOH/sidework', 'label' => 'Server Sidework', 'slot' => 'showtime/server-sidework', 'emoji' => '🧹'],
             ['id' => 'floor', 'group' => 'foh', 'href' => '/FOH/floor-plan', 'label' => 'Floor Plan', 'slot' => 'showtime/floor-plan', 'emoji' => '🪑'],
@@ -2353,7 +2450,7 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
             ['id' => 'team', 'group' => 'admin', 'href' => '/admin/team', 'label' => 'Team & Roles', 'slot' => 'sandwich-hq/team', 'emoji' => '👥'],
             ['id' => 'inventory', 'group' => 'admin', 'href' => '/admin/inventory', 'label' => 'Inventory', 'slot' => 'sandwich-hq/inventory', 'emoji' => '📦'],
             ['id' => 'reports', 'group' => 'admin', 'href' => '/admin/reports', 'label' => 'Reports', 'slot' => 'sandwich-hq/reports', 'emoji' => '📊'],
-            ['id' => 'compliance', 'group' => 'admin', 'href' => '/admin/compliance', 'label' => 'Compliance', 'slot' => 'sandwich-hq/compliance', 'emoji' => '✅'],
+            ['id' => 'catering', 'group' => 'admin', 'href' => '/admin/catering', 'label' => 'Catering', 'slot' => 'sandwich-hq/operations', 'emoji' => '🥂'],
             ['id' => 'ops', 'group' => 'admin', 'href' => '/admin/ops', 'label' => 'Restaurant Ops', 'slot' => 'sandwich-hq/operations', 'emoji' => '🏢'],
             ['id' => 'announcements', 'group' => 'messages', 'href' => '/messages/announcements', 'label' => 'Announcements', 'slot' => 'jelly/announcements', 'emoji' => '📢'],
             ['id' => 'shift-notes', 'group' => 'messages', 'href' => '/messages/shift-notes', 'label' => 'Shift Notes', 'slot' => 'jelly/shift-notes', 'emoji' => '📝'],
@@ -2632,6 +2729,21 @@ $body_class = function_exists('pbj_theme_body_class') ? pbj_theme_body_class() :
     </script>
     <script src="/home-shortcuts.js?v=2"></script>
     <script src="/home-dashboard-tiles.js?v=2"></script>
+    <script src="/first-10-minutes.js?v=1"></script>
+    <script>
+    (function () {
+        var root = document.getElementById('pbj-10min-root');
+        if (!root || !window.PbjFirst10) return;
+        var sweet = root.getAttribute('data-sweet') === '1';
+        var isGuest = root.getAttribute('data-guest') === '1';
+        window.PbjFirst10.renderDashboardCard(root, {
+            sweet: sweet,
+            isGuest: isGuest,
+            isAudience: true
+        });
+        // Named trial accounts: leave save_account soft until they dismiss or convert.
+    })();
+    </script>
     <script src="/shared-state.js?v=4"></script>
     <script src="/pos-sync-client.js?v=3"></script>
     <script src="/ops-nudges.js?v=3"></script>

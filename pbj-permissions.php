@@ -221,10 +221,14 @@ function pbj_permission_catalog(): array {
             'id' => 'admin_schedules',
             'label' => 'Admin · Schedules & Shifts',
             'items' => [
+                ['key' => 'admin.schedules.view', 'label' => 'View Schedules / My Schedule'],
                 ['key' => 'admin.schedules.add_shift', 'label' => 'Add Shift'],
                 ['key' => 'admin.schedules.clear_week', 'label' => 'Clear This Week'],
                 ['key' => 'admin.schedules.print', 'label' => 'Print / Save Schedule'],
                 ['key' => 'admin.schedules.view_wages', 'label' => 'View labor $ / wages on schedule (Owner, GM, Manager)'],
+                ['key' => 'admin.schedules.trade', 'label' => 'Give up / swap / claim shifts'],
+                ['key' => 'admin.schedules.approve', 'label' => 'Approve shift trades'],
+                ['key' => 'admin.schedules.manage_settings', 'label' => 'Schedule trade settings (Owner / GM)'],
             ],
         ],
         [
@@ -241,6 +245,14 @@ function pbj_permission_catalog(): array {
             'items' => [
                 ['key' => 'admin.inventory.view', 'label' => 'View Inventory & Vendors'],
                 ['key' => 'admin.inventory.edit', 'label' => 'Edit Inventory & Vendors'],
+            ],
+        ],
+        [
+            'id' => 'admin_catering',
+            'label' => 'Admin · Catering',
+            'items' => [
+                ['key' => 'admin.catering.view', 'label' => 'View Catering'],
+                ['key' => 'admin.catering.edit', 'label' => 'Edit Catering'],
             ],
         ],
         [
@@ -357,6 +369,7 @@ function pbj_permissions_default_matrix(): array {
         'admin.schedules.*',
         'admin.reports.*',
         'admin.inventory.*',
+        'admin.catering.*',
         'admin.compliance.*',
         'messages.*',
         'settings.*',
@@ -378,6 +391,8 @@ function pbj_permissions_default_matrix(): array {
         'messages.dms.send', 'messages.dms.view',
         'messages.foh_updates.post', 'messages.foh_updates.view',
         'admin.team.spotlight.view',
+        'admin.schedules.view',
+        'admin.schedules.trade',
         'settings.*',
     ];
 
@@ -394,13 +409,15 @@ function pbj_permissions_default_matrix(): array {
         'messages.dms.send', 'messages.dms.view',
         'messages.boh_updates.post', 'messages.boh_updates.view',
         'admin.team.spotlight.view',
+        'admin.schedules.view',
+        'admin.schedules.trade',
         'settings.*',
     ];
 
     return [
         'owner' => $allTrue,
         'gm' => $allTrue,
-        'manager' => $set([], $managerOn, ['admin.team.permissions_manage']),
+        'manager' => $set([], $managerOn, ['admin.team.permissions_manage', 'admin.schedules.manage_settings']),
         'foh' => $set([], $fohOn),
         'boh' => $set([], $bohOn),
     ];

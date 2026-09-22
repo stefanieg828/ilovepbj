@@ -2,8 +2,8 @@
 /**
  * Per-user preferences API (syncs across devices for the same account).
  *
- * GET  → { ok, userId, prefs: { home_shortcuts?: { ids: string[], updatedAt: int }, ... } }
- * POST JSON { home_shortcuts: { ids: string[], updatedAt?: int } }
+ * GET  → { ok, userId, prefs: { home_shortcuts?, home_tiles?, schedule_me_id?, onboarding_10min?, ... } }
+ * POST JSON { home_shortcuts? | home_tiles? | schedule_me_id? | onboarding_10min? }
  *       → merges into users.prefs_json; last-write-wins by updatedAt when both sides send it
  */
 require_once 'config.php';
@@ -37,6 +37,7 @@ function pbj_prefs_allowed_shortcut_ids(): array {
         'foh-open', 'sidework', 'floor', 'reservations', 'pos', 'bar',
         'schedules', 'team', 'inventory', 'reports', 'compliance', 'ops',
         'announcements', 'shift-notes', 'dms', 'broadcasts',
+        '86-board', '86-display', 'allergens', 'my-schedule',
     ];
 }
 
@@ -111,6 +112,32 @@ function pbj_prefs_normalize_home_tiles($raw): ?array {
 }
 
 /**
+ * Normalize schedule_me_id: { id: string, updatedAt: int }
+ *
+ * @param mixed $raw
+ * @return array{id: string, updatedAt: int}|null
+ */
+function pbj_prefs_normalize_schedule_me($raw): ?array {
+    $id = '';
+    $updatedAt = 0;
+    if (is_string($raw) || is_int($raw)) {
+        $id = trim((string) $raw);
+    } elseif (is_array($raw)) {
+        $id = trim((string) ($raw['id'] ?? $raw['personId'] ?? ''));
+        $updatedAt = (int) ($raw['updatedAt'] ?? $raw['updated_at'] ?? 0);
+    } else {
+        return null;
+    }
+    if (strlen($id) > 80) {
+        $id = substr($id, 0, 80);
+    }
+    if ($updatedAt < 0) {
+        $updatedAt = 0;
+    }
+    return ['id' => $id, 'updatedAt' => $updatedAt];
+}
+
+/**
  * Normalize home_shortcuts blob: { ids: string[], updatedAt: int }
  *
  * @param mixed $raw
@@ -158,6 +185,41 @@ function pbj_prefs_normalize_home_shortcuts($raw): ?array {
     return ['ids' => $clean, 'updatedAt' => $updatedAt];
 }
 
+
+/**
+ * Normalize onboarding_10min blob for the first-10-minutes guided path.
+ *
+ * @param mixed $raw
+ * @return array{started:bool,dismissed:bool,completed:bool,steps:array<string,bool>,updatedAt:int}|null
+ */
+function pbj_prefs_normalize_onboarding_10min($raw): ?array {
+    if (!is_array($raw)) {
+        return null;
+    }
+    $stepsIn = isset($raw['steps']) && is_array($raw['steps']) ? $raw['steps'] : [];
+    $steps = [
+        'recipe' => !empty($stepsIn['recipe']),
+        'plate_cost' => !empty($stepsIn['plate_cost']),
+        'menu_price' => !empty($stepsIn['menu_price']),
+        'save_account' => !empty($stepsIn['save_account']),
+    ];
+    $updatedAt = (int) ($raw['updatedAt'] ?? $raw['updated_at'] ?? 0);
+    if ($updatedAt < 0) {
+        $updatedAt = 0;
+    }
+    $completed = !empty($raw['completed']);
+    if ($steps['recipe'] && $steps['plate_cost'] && $steps['menu_price'] && $steps['save_account']) {
+        $completed = true;
+    }
+    return [
+        'started' => array_key_exists('started', $raw) ? !empty($raw['started']) : true,
+        'dismissed' => !empty($raw['dismissed']),
+        'completed' => $completed,
+        'steps' => $steps,
+        'updatedAt' => $updatedAt,
+    ];
+}
+
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $prefs = pbj_load_user_prefs($pdo, $uid);
@@ -173,6 +235,18 @@ try {
             $ht = pbj_prefs_normalize_home_tiles($prefs['home_tiles']);
             if ($ht !== null) {
                 $out['prefs']['home_tiles'] = $ht;
+            }
+        }
+        if (isset($prefs['schedule_me_id'])) {
+            $me = pbj_prefs_normalize_schedule_me($prefs['schedule_me_id']);
+            if ($me !== null) {
+                $out['prefs']['schedule_me_id'] = $me;
+            }
+        }
+        if (isset($prefs['onboarding_10min'])) {
+            $ob = pbj_prefs_normalize_onboarding_10min($prefs['onboarding_10min']);
+            if ($ob !== null) {
+                $out['prefs']['onboarding_10min'] = $ob;
             }
         }
 
@@ -246,6 +320,58 @@ try {
             }
         }
 
+        if (array_key_exists('schedule_me_id', $body)) {
+            $incoming = pbj_prefs_normalize_schedule_me($body['schedule_me_id']);
+            if ($incoming === null) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'bad_schedule_me_id']);
+                exit;
+            }
+            $existing = isset($current['schedule_me_id'])
+                ? pbj_prefs_normalize_schedule_me($current['schedule_me_id'])
+                : null;
+            if (
+                $existing
+                && $existing['updatedAt'] > 0
+                && $incoming['updatedAt'] > 0
+                && $existing['updatedAt'] > $incoming['updatedAt']
+            ) {
+                $outPrefs['schedule_me_id'] = $existing;
+                $conflictKept = 'server';
+            } else {
+                if ($incoming['updatedAt'] <= 0) {
+                    $incoming['updatedAt'] = (int) round(microtime(true) * 1000);
+                }
+                $patch['schedule_me_id'] = $incoming;
+            }
+        }
+
+        if (array_key_exists('onboarding_10min', $body)) {
+            $incoming = pbj_prefs_normalize_onboarding_10min($body['onboarding_10min']);
+            if ($incoming === null) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'bad_onboarding_10min']);
+                exit;
+            }
+            $existing = isset($current['onboarding_10min'])
+                ? pbj_prefs_normalize_onboarding_10min($current['onboarding_10min'])
+                : null;
+            if (
+                $existing
+                && $existing['updatedAt'] > 0
+                && $incoming['updatedAt'] > 0
+                && $existing['updatedAt'] > $incoming['updatedAt']
+            ) {
+                $outPrefs['onboarding_10min'] = $existing;
+                $conflictKept = 'server';
+            } else {
+                if ($incoming['updatedAt'] <= 0) {
+                    $incoming['updatedAt'] = (int) round(microtime(true) * 1000);
+                }
+                $patch['onboarding_10min'] = $incoming;
+            }
+        }
+
         if (!$patch && !$outPrefs) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'empty_patch']);
@@ -263,6 +389,18 @@ try {
             $ht = pbj_prefs_normalize_home_tiles($saved['home_tiles']);
             if ($ht !== null) {
                 $outPrefs['home_tiles'] = $ht;
+            }
+        }
+        if (isset($saved['schedule_me_id']) && !isset($outPrefs['schedule_me_id'])) {
+            $me = pbj_prefs_normalize_schedule_me($saved['schedule_me_id']);
+            if ($me !== null) {
+                $outPrefs['schedule_me_id'] = $me;
+            }
+        }
+        if (isset($saved['onboarding_10min']) && !isset($outPrefs['onboarding_10min'])) {
+            $ob = pbj_prefs_normalize_onboarding_10min($saved['onboarding_10min']);
+            if ($ob !== null) {
+                $outPrefs['onboarding_10min'] = $ob;
             }
         }
 
