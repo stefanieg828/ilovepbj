@@ -932,5 +932,14 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             document.addEventListener('pbj-perms-ready', applyCostPerms);
 })();
     </script>
+
+<script src="/first-10-minutes.js?v=1"></script>
+<script>
+(function () {
+    if (!window.PbjFirst10) return;
+    var sweet = <?php echo !empty($is_sweet) ? 'true' : 'false'; ?>;
+    window.PbjFirst10.mountPageHint({ sweet: sweet, defaultStep: 'plate_cost' });
+})();
+</script>
 </body>
 </html>

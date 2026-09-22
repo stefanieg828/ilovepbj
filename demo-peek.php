@@ -96,7 +96,21 @@ try {
     pbj_approve_invite_joiner($pdo, $uid);
 
     if (function_exists('pbj_save_user_prefs')) {
-        pbj_save_user_prefs($pdo, $uid, ['demo_guest' => 1]);
+        pbj_save_user_prefs($pdo, $uid, [
+            'demo_guest' => 1,
+            'onboarding_10min' => [
+                'started' => true,
+                'dismissed' => false,
+                'completed' => false,
+                'steps' => [
+                    'recipe' => false,
+                    'plate_cost' => false,
+                    'menu_price' => false,
+                    'save_account' => false,
+                ],
+                'updatedAt' => (int) round(microtime(true) * 1000),
+            ],
+        ]);
     }
 
     $pdo->commit();

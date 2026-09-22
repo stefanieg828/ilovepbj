@@ -126,6 +126,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($salesCodeIn !== '' && function_exists('pbj_attribute_sale')) {
                         pbj_attribute_sale($pdo, $uid, 0, 'individual', $salesCodeIn, 'register_playground');
                     }
+                    
+                    if (function_exists('pbj_save_user_prefs')) {
+                        pbj_save_user_prefs($pdo, $uid, [
+                            'onboarding_10min' => [
+                                'started' => true,
+                                'dismissed' => false,
+                                'completed' => false,
+                                'steps' => [
+                                    'recipe' => false,
+                                    'plate_cost' => false,
+                                    'menu_price' => false,
+                                    'save_account' => true,
+                                ],
+                                'updatedAt' => (int) round(microtime(true) * 1000),
+                            ],
+                        ]);
+                    }
+
                     pbj_post_auth_redirect($pdo, '/home?playground=1');
                     exit();
                 }
@@ -212,7 +230,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $trial = pbj_start_free_trial($pdo, $uid, $planId, 0);
                         if (!empty($trial['ok'])) {
                             $_SESSION['access_status'] = 'approved';
-                            pbj_post_auth_redirect($pdo, '/home?welcome=1&trial=1');
+                            
+                    if (function_exists('pbj_save_user_prefs')) {
+                        pbj_save_user_prefs($pdo, $uid, [
+                            'onboarding_10min' => [
+                                'started' => true,
+                                'dismissed' => false,
+                                'completed' => false,
+                                'steps' => [
+                                    'recipe' => false,
+                                    'plate_cost' => false,
+                                    'menu_price' => false,
+                                    'save_account' => true,
+                                ],
+                                'updatedAt' => (int) round(microtime(true) * 1000),
+                            ],
+                        ]);
+                    }
+
+                    pbj_post_auth_redirect($pdo, '/home?welcome=1&trial=1');
                         }
                     }
                     // Fallback: card pay when Stripe is set up
@@ -243,6 +279,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $trial = pbj_start_free_trial($pdo, $uid, $planId, $rid);
                         if (!empty($trial['ok'])) {
                             $_SESSION['access_status'] = 'approved';
+                            if (function_exists('pbj_save_user_prefs')) {
+                                pbj_save_user_prefs($pdo, $uid, [
+                                    'onboarding_10min' => [
+                                        'started' => true,
+                                        'dismissed' => false,
+                                        'completed' => false,
+                                        'steps' => [
+                                            'recipe' => false,
+                                            'plate_cost' => false,
+                                            'menu_price' => false,
+                                            'save_account' => true,
+                                        ],
+                                        'updatedAt' => (int) round(microtime(true) * 1000),
+                                    ],
+                                ]);
+                            }
                             $go = '/home?welcome=1&trial=1&code=' . urlencode($created['invite_code']);
                             pbj_post_auth_redirect($pdo, $go);
                         }

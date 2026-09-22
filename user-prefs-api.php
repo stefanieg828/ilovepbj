@@ -2,8 +2,8 @@
 /**
  * Per-user preferences API (syncs across devices for the same account).
  *
- * GET  → { ok, userId, prefs: { home_shortcuts?: { ids: string[], updatedAt: int }, ... } }
- * POST JSON { home_shortcuts: { ids: string[], updatedAt?: int } }
+ * GET  → { ok, userId, prefs: { home_shortcuts?, home_tiles?, schedule_me_id?, onboarding_10min?, ... } }
+ * POST JSON { home_shortcuts? | home_tiles? | schedule_me_id? | onboarding_10min? }
  *       → merges into users.prefs_json; last-write-wins by updatedAt when both sides send it
  */
 require_once 'config.php';
@@ -185,6 +185,41 @@ function pbj_prefs_normalize_home_shortcuts($raw): ?array {
     return ['ids' => $clean, 'updatedAt' => $updatedAt];
 }
 
+
+/**
+ * Normalize onboarding_10min blob for the first-10-minutes guided path.
+ *
+ * @param mixed $raw
+ * @return array{started:bool,dismissed:bool,completed:bool,steps:array<string,bool>,updatedAt:int}|null
+ */
+function pbj_prefs_normalize_onboarding_10min($raw): ?array {
+    if (!is_array($raw)) {
+        return null;
+    }
+    $stepsIn = isset($raw['steps']) && is_array($raw['steps']) ? $raw['steps'] : [];
+    $steps = [
+        'recipe' => !empty($stepsIn['recipe']),
+        'plate_cost' => !empty($stepsIn['plate_cost']),
+        'menu_price' => !empty($stepsIn['menu_price']),
+        'save_account' => !empty($stepsIn['save_account']),
+    ];
+    $updatedAt = (int) ($raw['updatedAt'] ?? $raw['updated_at'] ?? 0);
+    if ($updatedAt < 0) {
+        $updatedAt = 0;
+    }
+    $completed = !empty($raw['completed']);
+    if ($steps['recipe'] && $steps['plate_cost'] && $steps['menu_price'] && $steps['save_account']) {
+        $completed = true;
+    }
+    return [
+        'started' => array_key_exists('started', $raw) ? !empty($raw['started']) : true,
+        'dismissed' => !empty($raw['dismissed']),
+        'completed' => $completed,
+        'steps' => $steps,
+        'updatedAt' => $updatedAt,
+    ];
+}
+
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $prefs = pbj_load_user_prefs($pdo, $uid);
@@ -206,6 +241,12 @@ try {
             $me = pbj_prefs_normalize_schedule_me($prefs['schedule_me_id']);
             if ($me !== null) {
                 $out['prefs']['schedule_me_id'] = $me;
+            }
+        }
+        if (isset($prefs['onboarding_10min'])) {
+            $ob = pbj_prefs_normalize_onboarding_10min($prefs['onboarding_10min']);
+            if ($ob !== null) {
+                $out['prefs']['onboarding_10min'] = $ob;
             }
         }
 
@@ -305,6 +346,32 @@ try {
             }
         }
 
+        if (array_key_exists('onboarding_10min', $body)) {
+            $incoming = pbj_prefs_normalize_onboarding_10min($body['onboarding_10min']);
+            if ($incoming === null) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'bad_onboarding_10min']);
+                exit;
+            }
+            $existing = isset($current['onboarding_10min'])
+                ? pbj_prefs_normalize_onboarding_10min($current['onboarding_10min'])
+                : null;
+            if (
+                $existing
+                && $existing['updatedAt'] > 0
+                && $incoming['updatedAt'] > 0
+                && $existing['updatedAt'] > $incoming['updatedAt']
+            ) {
+                $outPrefs['onboarding_10min'] = $existing;
+                $conflictKept = 'server';
+            } else {
+                if ($incoming['updatedAt'] <= 0) {
+                    $incoming['updatedAt'] = (int) round(microtime(true) * 1000);
+                }
+                $patch['onboarding_10min'] = $incoming;
+            }
+        }
+
         if (!$patch && !$outPrefs) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'empty_patch']);
@@ -328,6 +395,12 @@ try {
             $me = pbj_prefs_normalize_schedule_me($saved['schedule_me_id']);
             if ($me !== null) {
                 $outPrefs['schedule_me_id'] = $me;
+            }
+        }
+        if (isset($saved['onboarding_10min']) && !isset($outPrefs['onboarding_10min'])) {
+            $ob = pbj_prefs_normalize_onboarding_10min($saved['onboarding_10min']);
+            if ($ob !== null) {
+                $outPrefs['onboarding_10min'] = $ob;
             }
         }
 
