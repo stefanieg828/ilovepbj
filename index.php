@@ -20,19 +20,19 @@ $plans = pbj_plans();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ilovepbj ops — Restaurant operations that stick</title>
-    <meta name="description" content="ilovepbj ops is a restaurant operations hub for FOH, BOH, team, messages, and day-to-day kitchen &amp; floor tools — sized for individuals and crews, with heart.">
+    <meta name="description" content="Checklists and food costing for independent restaurants. ilovepbj ops is a restaurant operations hub for FOH, BOH, team, messages, and day-to-day kitchen &amp; floor tools — sized for individuals and crews, with heart.">
     <link rel="canonical" href="https://ilovepbj.shop/">
     <meta name="robots" content="index, follow">
     <?php if (function_exists('pbj_render_favicon_links')) { pbj_render_favicon_links(); } ?>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ilovepbj ops">
     <meta property="og:title" content="ilovepbj ops — Restaurant operations that stick">
-    <meta property="og:description" content="FOH, BOH, team, and messages in one ops hub for restaurants. Pick a plan, create your house, and run the shift with heart.">
+    <meta property="og:description" content="Checklists and food costing for independent restaurants. FOH, BOH, team, and messages in one ops hub — pick a plan, create your house, and run the shift with heart.">
     <meta property="og:url" content="https://ilovepbj.shop/">
     <meta property="og:image" content="https://ilovepbj.shop/icon-512.png?v=3">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="ilovepbj ops — Restaurant operations that stick">
-    <meta name="twitter:description" content="Restaurant operations hub for FOH, BOH, team, and messages.">
+    <meta name="twitter:description" content="Checklists and food costing for independent restaurants — with a little jelly.">
     <meta name="twitter:image" content="https://ilovepbj.shop/icon-512.png?v=3">
     <script type="application/ld+json">
     {
@@ -42,7 +42,7 @@ $plans = pbj_plans();
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
       "url": "https://ilovepbj.shop/",
-      "description": "Restaurant operations hub for FOH, BOH, team, messages, and day-to-day tools.",
+      "description": "Checklists and food costing for independent restaurants. Operations hub for FOH, BOH, team, messages, and day-to-day tools.",
       "offers": {
         "@type": "AggregateOffer",
         "priceCurrency": "USD",
@@ -125,6 +125,13 @@ $plans = pbj_plans();
         .hero h1 {
             font-family: 'ModernLoveCaps', serif; font-size: clamp(2.6rem, 8vw, 4.2rem);
             color: var(--pink); margin: 0 0 12px; line-height: 1.1;
+        }
+        .hero .seo-lead {
+            font-size: clamp(1.05rem, 2.6vw, 1.25rem);
+            color: var(--purple);
+            margin: 0 0 10px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
         }
         .hero .tagline { font-size: clamp(1.15rem, 3vw, 1.45rem); opacity: 0.9; margin: 0 0 22px; }
         .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 14px; }
@@ -315,6 +322,20 @@ $plans = pbj_plans();
             border: 2px solid var(--mint); box-shadow: none;
         }
         .code-band .btn-ghost:hover { background: rgba(187, 231, 218, 0.15); color: white; }
+        .demo-code-chip {
+            display: inline-block;
+            background: rgba(187, 231, 218, 0.2);
+            border: 2px dashed var(--mint);
+            color: var(--mint);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1.35rem;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 14px;
+            margin: 0 0 16px;
+        }
+        .demo-band-note { font-size: 0.95rem; opacity: 0.88; margin: -6px 0 14px; color: white; }
         .footer {
             text-align: center; padding: 28px 16px 40px; font-size: 0.95rem;
             background: var(--purple); color: var(--mint);
@@ -334,26 +355,45 @@ $plans = pbj_plans();
         <a class="nav-brand" href="/">ilovepbj ops</a>
         <div class="nav-actions">
             <a class="nav-link" href="#how">How it works</a>
+            <a class="nav-link" href="/food-cost-calculator">Food cost</a>
+            <a class="nav-link" href="/checklists">Checklists</a>
             <a class="nav-link" href="#plans">Plans</a>
+            <a class="nav-link" href="/catering">Catering</a>
             <a class="nav-link" href="/join">I have a code</a>
             <a class="btn btn-outline btn-sm" href="/login">Log in</a>
-            <a class="btn btn-mint btn-sm" href="/register?plan=crew_10">Start free trial</a>
+            <a class="btn btn-mint btn-sm" href="/demo">Peek free demo</a>
         </div>
     </nav>
 
     <header class="hero">
         <h1>Ops that stick like jelly</h1>
+        <p class="seo-lead">Checklists and food costing that actually stick — built for independent restaurants.</p>
         <p class="tagline">
             One cute hub for FOH, BOH, team chat, schedules, sales &amp; recipes —
             built for real restaurants, not spreadsheets that melt at 5&nbsp;p.m.
         </p>
         <div class="hero-ctas">
-            <a class="btn btn-primary" href="/register?plan=crew_10">Start 14-day free trial</a>
-            <a class="btn btn-purple" href="/join">Join with a code</a>
-            <a class="btn btn-ghost" href="/login">Log in</a>
+            <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
+            <a class="btn btn-purple" href="/register?plan=crew_10">Start 14-day free trial</a>
+            <a class="btn btn-ghost" href="/join">Join with a code</a>
         </div>
-        <p class="hero-sub">14 days free · no card required · then house pricing by headcount</p>
+        <p class="hero-sub">One tap into FREE-DEMO · no username / email / password · no card · nightly reset · convert anytime</p>
+        <p class="hero-sub" style="margin-top:6px;"><a href="/register?mode=playground">Create a demo login</a> if you want a named account</p>
     </header>
+
+    <section class="section" id="free-demo">
+        <div class="code-band">
+            <h2>FREE DEMO</h2>
+            <p>Peek the full kitchen without starting a paid trial — one tap, no signup form. Resets nightly so you can explore safely.</p>
+            <p class="demo-band-note">Public invite code</p>
+            <div class="demo-code-chip" aria-label="Free demo invite code">FREE-DEMO</div>
+            <div class="code-actions">
+                <a class="btn btn-primary" href="/demo">Peek free demo — no signup</a>
+                <a class="btn btn-ghost" href="/register?mode=playground">Create a demo login</a>
+                <a class="btn btn-ghost" href="/join">I have a house code</a>
+            </div>
+        </div>
+    </section>
 
     <div class="band-mint">
     <section class="section" id="how">
@@ -393,6 +433,17 @@ $plans = pbj_plans();
         </div>
     </section>
     </div>
+
+
+    <section class="section" id="food-cost">
+        <div class="code-band" style="margin-top: 8px;">
+            <h2>Food cost calculator</h2>
+            <p>Recipe → plate cost → food cost % → suggested menu price. See your plate cost in minutes.</p>
+            <div class="code-actions">
+                <a class="btn btn-primary" href="/food-cost-calculator">See plate cost tools</a>
+            </div>
+        </div>
+    </section>
 
     <div class="band-purple">
     <section class="section plans-section" id="plans">
@@ -515,7 +566,7 @@ $plans = pbj_plans();
 
     <footer class="footer">
         <p>ilovepbj ops · restaurant ops with heart</p>
-        <p><a href="/login">Log in</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a></p>
+        <p><a href="/login">Log in</a> · <a href="/demo">Peek free demo</a> · <a href="/register?mode=playground">Create a demo login</a> · <a href="/register">Create account</a> · <a href="/join">Join with code</a> · <a href="/food-cost-calculator">Food cost calculator</a> · <a href="/checklists">Checklists</a></p>
         <p>
             <a href="/privacy">Privacy</a> ·
             <a href="/terms">Terms</a> ·

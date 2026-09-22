@@ -998,5 +998,14 @@ $prep_methods = ['as is', 'whole', 'diced', 'sliced', 'minced', 'julienne', 'cho
             document.addEventListener('pbj-perms-ready', applyRecipesPerms);
     })();
     </script>
+
+<script src="/first-10-minutes.js?v=1"></script>
+<script>
+(function () {
+    if (!window.PbjFirst10) return;
+    var sweet = <?php echo !empty($is_sweet) ? 'true' : 'false'; ?>;
+    window.PbjFirst10.mountPageHint({ sweet: sweet, defaultStep: 'recipe' });
+})();
+</script>
 </body>
 </html>

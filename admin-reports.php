@@ -144,6 +144,12 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 <p><?php echo $is_sweet ? 'Schedule clocks now · POS punches & labor $ later' : 'Schedule clocks now · POS punches & labor $ later'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Manual now · POS later' : 'Manual now · POS later'; ?></span>
             </a>
+            <a href="/admin/reports/weekly-snapshot" class="card">
+                <?php pbj_render_card_icon('reports-hub/trends', 'Weekly Owner Snapshot', '📬'); ?>
+                <h3><?php echo $is_sweet ? 'Weekly Owner Snapshot' : 'Weekly Owner Snapshot'; ?></h3>
+                <p><?php echo $is_sweet ? 'Monday pulse — dishes, 86s, lists, labor' : 'Monday pulse: FC%, 86s, checklists, labor'; ?></p>
+                <span class="pill"><?php echo $is_sweet ? 'Owners · GMs' : 'Owners · GMs'; ?></span>
+            </a>
             <a href="/admin/trends" class="card">
                 <?php pbj_render_card_icon('reports-hub/trends', 'Weekly Trends', '📊'); ?>
                 <h3>Weekly Trends</h3>

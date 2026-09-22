@@ -92,8 +92,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
     <div class="content">
         <div class="intro">
             <?php echo $is_sweet
-                ? 'Your people hub: who works here, the house handbook, and Training Manuals (FOH + BOH). Edit the built-in guides or upload your own Word / PDF 💕'
-                : 'People hub: roster and permissions, employee handbook, and Training Manuals (FOH + BOH). Edit starters or upload Word / PDF.'; ?>
+                ? 'Your people hub: who works here, the house handbook, Training Manuals (FOH + BOH), and compliance certs. Edit guides or upload Word / PDF 💕'
+                : 'People hub: roster and permissions, handbook, Training Manuals (FOH + BOH), and compliance certs. Edit starters or upload Word / PDF.'; ?>
         </div>
 
         <div class="section-label"><?php echo $is_sweet ? 'People' : 'People'; ?></div>
@@ -121,6 +121,15 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 <?php pbj_render_card_icon('team-hub/foh-manual', 'Training Manuals', '📗'); ?>
                 <h3><?php echo $is_sweet ? 'Training Manuals' : 'Training Manuals'; ?></h3>
                 <p><?php echo $is_sweet ? 'FOH + BOH training in one place — edit or upload' : 'FOH and BOH training in one place — edit or upload'; ?></p>
+            </a>
+        </div>
+
+        <div class="section-label"><?php echo $is_sweet ? 'Compliance' : 'Compliance'; ?></div>
+        <div class="grid">
+            <a href="/admin/compliance" class="card" data-perm="admin.compliance.view">
+                <?php pbj_render_card_icon('team-hub/handbook', 'Compliance & Certifications', '✅'); ?>
+                <h3><?php echo $is_sweet ? 'Compliance & Certifications' : 'Compliance & Certifications'; ?></h3>
+                <p><?php echo $is_sweet ? 'Certs, expirations & handbook sign-offs' : 'Certs, expirations, and document sign-offs'; ?></p>
             </a>
         </div>
     </div>

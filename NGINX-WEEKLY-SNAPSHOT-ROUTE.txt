@@ -1,0 +1,9 @@
+ilovepbj — nginx pretty URL for weekly owner snapshot
+=====================================================
+
+Add this location block next to other admin exact-match rewrites:
+
+    location = /admin/reports/weekly-snapshot { rewrite ^ /admin-weekly-snapshot.php last; }
+
+Also wired in PHP: config.php pbj_page_routes() maps
+admin-weekly-snapshot.php => /admin/reports/weekly-snapshot

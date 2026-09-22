@@ -1,0 +1,12 @@
+ilovepbj — nginx pretty URL for guest demo peek
+==============================================
+
+Add this location block next to the other exact-match rewrites
+(register, join, login, food-cost-calculator, etc.):
+
+    location = /demo { rewrite ^ /demo-peek.php last; }
+
+Also wired in PHP: config.php pbj_page_routes() maps
+demo-peek.php => /demo
+
+Do not expose /sales playground via this path. /demo only joins FREE-DEMO.
