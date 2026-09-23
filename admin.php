@@ -285,7 +285,7 @@ $is_sweet = $__tf['fun']; // fun labels + stickers (Sweet + Neon)
                 <p><?php echo $is_sweet ? 'Certs, expirations & handbook sign-offs' : 'Certs, expirations, and document sign-offs'; ?></p>
             </a>
             <a href="/admin/checklist-overview" class="card" data-card-id="checklist-overview" data-perm-any="ops.receive_list_completion,admin.ops.docs.sections">
-                <?php pbj_render_card_icon('sandwich-hq/operations', 'Checklist Overview', '📋'); ?>
+                <?php pbj_render_card_icon('ops-hub/checklist', 'Checklist Overview', '📋'); ?>
                 <h3><?php echo $is_sweet ? 'Checklist Overview' : 'Checklist Overview'; ?></h3>
                 <p><?php echo $is_sweet ? 'Who finished what — FOH, BOH & prep' : 'FOH/BOH completion board for managers'; ?></p>
             </a>

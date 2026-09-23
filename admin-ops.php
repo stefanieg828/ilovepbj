@@ -87,8 +87,8 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
     <div class="content">
         <div class="intro">
             <?php echo $is_sweet
-                ? 'How the house runs day to day: location & hours, standard operating procedures, and health & safety. Build in-app or upload Word / PDF 🏪'
-                : 'Day-to-day house ops: location and hours, SOPs, and health & safety. Edit in-app or upload Word / PDF.'; ?>
+                ? 'How the house runs day to day: location & hours, SOPs, health & safety, and checklist completion. Build in-app or upload Word / PDF 🏪'
+                : 'Day-to-day house ops: location and hours, SOPs, health & safety, and checklist overview. Edit in-app or upload Word / PDF.'; ?>
         </div>
 
         <div class="grid">
@@ -106,6 +106,11 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 <?php pbj_render_card_icon('ops-hub/health', 'Health & Safety', '🛡️'); ?>
                 <h3><?php echo $is_sweet ? 'Health & Safety' : 'Health & Safety'; ?></h3>
                 <p><?php echo $is_sweet ? 'Allergens, incidents & emergency basics' : 'Allergens, incidents, and emergency basics'; ?></p>
+            </a>
+            <a href="/admin/checklist-overview" class="card" data-perm-any="ops.receive_list_completion,admin.ops.docs.sections">
+                <?php pbj_render_card_icon('ops-hub/checklist', 'Checklist Overview', '📋'); ?>
+                <h3><?php echo $is_sweet ? 'Checklist Overview' : 'Checklist Overview'; ?></h3>
+                <p><?php echo $is_sweet ? 'Who finished what — FOH, BOH & prep' : 'FOH/BOH completion board for managers'; ?></p>
             </a>
         </div>
     </div>
