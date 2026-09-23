@@ -148,6 +148,13 @@ $default_lists = [
         .content { padding: 24px 16px; max-width: 760px; margin: 0 auto; }
         .intro { background: white; border-radius: 18px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); line-height: 1.45; opacity: 0.9; }
         .link-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .assign-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .filter-chip {
+            border: none; border-radius: 999px; padding: 8px 14px; font-size: 0.9rem; cursor: pointer;
+            background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            <?php if ($is_sweet): ?>font-family: 'DreamingOutLoudPro', serif; color: #3a2f1f;<?php else: ?>font-family: 'Lora', serif; color: #1A2A44;<?php endif; ?>
+        }
+        .filter-chip.active { <?php if ($is_sweet): ?>background: #E55163; color: white;<?php else: ?>background: #1A2A44; color: white;<?php endif; ?> }
         .chip { display: inline-block; padding: 8px 14px; border-radius: 999px; text-decoration: none; font-size: 0.95rem; <?php if ($is_sweet): ?>background: #FFF5F6; color: #E55163; border: 1px solid #F3C5CC; font-family: 'DreamingOutLoudPro', serif;<?php else: ?>background: #EEF2F8; color: #1A2A44; border: 1px solid #C5D0DE; font-family: 'Lora', serif;<?php endif; ?> }
         .progress-card { background: white; border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
         .progress-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
@@ -293,7 +300,7 @@ $default_lists = [
     <?php include 'bottom-nav.php'; ?>
     <script src="shared-state.js?v=4"></script>
     <script src="checklist-photos.js?v=1"></script>
-    <script src="checklist-assign.js?v=1"></script>
+    <script src="checklist-assign.js?v=2"></script>
     <script>
     (function () {
         // v3: stable starter item ids + kitchen sync

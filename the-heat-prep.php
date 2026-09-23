@@ -243,7 +243,7 @@ $default_stations = $is_sweet
     <script src="shared-state.js?v=4"></script>
     <script src="checklist-photos.js?v=1"></script>
     <script src="checklist-complete.js?v=1"></script>
-    <script src="checklist-assign.js?v=1"></script>
+    <script src="checklist-assign.js?v=2"></script>
     <script>
     (function () {
         const KEY = 'pbj_heat_prep_v1';

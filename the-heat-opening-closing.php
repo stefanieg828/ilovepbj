@@ -236,6 +236,7 @@ $default_lists = [
             <a class="chip" href="/BOH/temps"><?php echo $is_sweet ? '🌡️ Log temps' : '🌡️ Log temps'; ?></a>
             <a class="chip" href="/BOH/prep"><?php echo $is_sweet ? '🔪 Prep lists' : '🔪 Prep lists'; ?></a>
             <a class="chip" href="/BOH/cleaning"><?php echo $is_sweet ? '✨ Cleaning' : '✨ Cleaning'; ?></a>
+            <a class="chip" href="/BOH/86"><?php echo $is_sweet ? '🚫 86 board' : '🚫 86 board'; ?></a>
         </div>
 
         <div class="sync-pill no-print syncing" id="sync-pill" title="<?php echo $is_sweet ? 'Shared with your restaurant group' : 'Shared with your restaurant group'; ?>">
@@ -306,7 +307,7 @@ $default_lists = [
     <script src="shared-state.js?v=4"></script>
     <script src="checklist-photos.js?v=1"></script>
     <script src="checklist-complete.js?v=1"></script>
-    <script src="checklist-assign.js?v=1"></script>
+    <script src="checklist-assign.js?v=2"></script>
     <script>
     (function () {
         // v3: stable starter task ids + kitchen sync key with full Open/Mid/Close lists

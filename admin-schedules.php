@@ -3,6 +3,7 @@ require_once 'config.php';
 if (!isset($_SESSION['user_id'])) { header("Location: /login"); exit(); }
 $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
 $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+$user_label = trim((string) ($_SESSION['name'] ?? $_SESSION['username'] ?? 'Manager'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -84,8 +85,25 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
         .check-row label { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; cursor: pointer; }
         .check-row input { width: auto; }
         .alert-status { font-size: 0.9rem; opacity: 0.75; margin: 8px 0 0; line-height: 1.4; }
+        .sync-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 0.88rem; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); <?php if ($is_sweet): ?>background: #FFF5F6; color: #E55163; border: 1px solid #F3C5CC;<?php else: ?>background: #EEF2F8; color: #1A2A44; border: 1px solid #C5D0DE;<?php endif; ?> }
+        .sync-pill.offline { <?php if ($is_sweet): ?>background: #FFF8E8; color: #8A6D1F; border-color: #E8D59A;<?php else: ?>background: #FFF8E8; color: #5C4B1A; border-color: #E0D2A0;<?php endif; ?> }
+        .sync-pill.syncing .dot { background: #5B8DEF; animation: pulseDot 1s infinite; }
+        .sync-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #2E9B63; }
+        .sync-pill.offline .dot { background: #C9A227; }
+        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+        .posted-banner { border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; line-height: 1.4; font-size: 0.95rem; }
+        .posted-banner.is-posted { <?php if ($is_sweet): ?>background: #E8F8F1; border: 1px solid #8FD4B2; color: #1F6B4A;<?php else: ?>background: #E8F5EE; border: 1px solid #8FCBB0; color: #1F6B4A;<?php endif; ?> }
+        .posted-banner.is-draft { <?php if ($is_sweet): ?>background: #FFF8E8; border: 1px solid #E8D59A;<?php else: ?>background: #FFF8E8; border: 1px solid #E0D2A0;<?php endif; ?> }
+        .req-row { padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; <?php if ($is_sweet): ?>background: #FFFBF8; border: 1px solid #F3E8DD;<?php else: ?>background: #FAF8F5; border: 1px solid #E6DFD7;<?php endif; ?> }
+        .req-row .req-meta { font-size: 0.88rem; opacity: 0.75; margin-top: 4px; }
+        .req-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+        .toggle-row input { width: auto; transform: scale(1.2); }
+        .shift.is-open { <?php if ($is_sweet): ?>border-color: #E6A817; background: #FFFBF0;<?php else: ?>border-color: #E6A817; background: #FFF9EC;<?php endif; ?> }
+        .badge-open { background: #FFE082; color: #6D4C00; }
+        .badge-pending { background: #FFF3CD; color: #8A6D1F; }
         @media print {
-            .no-print, .back-link, .bottom-nav, #bottom-nav, nav, .toast, .week-nav, .print-bar,
+            .no-print, .back-link, .bottom-nav, #bottom-nav, nav, .toast, .week-nav, .print-bar, .sync-pill, .posted-banner, #trade-settings-card, #approval-queue-card,
             .actions-bar, #shift-form, .team-empty, .stats-row { display: none !important; }
             body { padding-bottom: 0; background: white; }
             .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
@@ -100,17 +118,16 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
         <p class="subtitle"><?php echo $is_sweet ? 'Weekly coverage, alerts & star of the house' : 'Weekly schedules, alerts, and employee spotlight'; ?></p>
     </div>
     <div class="content">
-        <div class="card no-print" data-perm-any="admin.team.spotlight.view,admin.team.spotlight.manage">
-            <h2><?php echo $is_sweet ? '⭐ Star of the house' : '⭐ Employee spotlight'; ?></h2>
-            <p class="hint"><?php echo $is_sweet
-                ? 'Pick employee of the week / month / quarter / custom — posts to Team Announcements and shows on the home banner 💕'
-                : 'Select employee of the week, month, quarter, or custom. Posts to announcements and the home banner.'; ?></p>
-            <a href="/admin/spotlight" class="btn btn-primary" style="width:100%;box-sizing:border-box;" data-perm-any="admin.team.spotlight.view,admin.team.spotlight.manage"><?php echo $is_sweet ? 'Open Star of the house' : 'Open employee spotlight'; ?></a>
-        </div>
         <div class="week-nav no-print">
             <button type="button" class="btn btn-secondary" id="prev-week">←</button>
             <div class="label" id="week-label">This week</div>
             <button type="button" class="btn btn-secondary" id="next-week">→</button>
+        </div>
+        <div class="sync-pill no-print" id="sched-sync-pill"><span class="dot"></span><span class="sync-text">This device</span></div>
+        <div class="posted-banner is-draft no-print" id="posted-banner">Draft week — staff can trade after you post.</div>
+        <div class="actions-bar no-print" id="post-week-bar" style="margin-bottom:14px;">
+            <button type="button" class="btn btn-primary" id="post-week-btn" data-perm="admin.schedules.add_shift"><?php echo $is_sweet ? '📣 Post this week' : 'Post this week'; ?></button>
+            <a href="/schedule" class="btn btn-secondary" data-perm-any="admin.schedules.view,admin.schedules.trade"><?php echo $is_sweet ? '👀 My Schedule' : 'My Schedule'; ?></a>
         </div>
         <div class="stats-row four no-print" id="sched-stats-row">
             <div class="stat"><div class="num" id="stat-shifts">0</div><div class="lbl"><?php echo $is_sweet ? 'Shifts this week' : 'Shifts this week'; ?></div></div>
@@ -118,6 +135,56 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
             <div class="stat wage-only" hidden data-perm="admin.schedules.view_wages"><div class="num" id="stat-labor-dol">—</div><div class="lbl"><?php echo $is_sweet ? 'Projected labor $' : 'Projected labor $'; ?></div></div>
             <div class="stat wage-only" hidden data-perm="admin.schedules.view_wages"><div class="num" id="stat-labor-pct">—</div><div class="lbl"><?php echo $is_sweet ? 'Labor % vs forecast' : 'Labor % vs forecast'; ?></div></div>
         </div>
+
+        <div class="card">
+            <h2><?php echo $is_sweet ? 'This week\'s board' : 'Week board'; ?></h2>
+            <div id="board"></div>
+        </div>
+
+        <div class="card no-print">
+            <h2><?php echo $is_sweet ? 'Add shift' : 'Add shift'; ?></h2>
+            <p class="hint"><?php echo $is_sweet
+                ? 'Names come from Team & Roles. If someone has multiple roles, pick which hat they wear this shift 💕'
+                : 'Names come from Team & Roles. If someone has multiple roles, choose the role for this shift.'; ?></p>
+            <div class="team-empty" id="team-empty" style="display:none;">
+                <?php echo $is_sweet
+                    ? 'No active teammates yet — add your crew in <a href="/admin/roster">Team & Roles</a> first 💕'
+                    : 'No active teammates yet. Add staff in <a href="/admin/roster">Team & Roles</a> first.'; ?>
+            </div>
+            <form id="shift-form">
+                <div class="field-row">
+                    <div class="field"><label><?php echo $is_sweet ? 'Day' : 'Day'; ?></label>
+                        <select id="f-day"><?php foreach ($days as $d): ?><option value="<?php echo $d; ?>"><?php echo $d; ?></option><?php endforeach; ?></select>
+                    </div>
+                    <div class="field"><label><?php echo $is_sweet ? 'Name' : 'Name'; ?></label>
+                        <select id="f-person" required>
+                            <option value=""><?php echo $is_sweet ? 'Select teammate…' : 'Select teammate…'; ?></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label><?php echo $is_sweet ? 'Role for this shift' : 'Role for this shift'; ?></label>
+                        <select id="f-role" required>
+                            <option value=""><?php echo $is_sweet ? 'Pick a person first…' : 'Select person first…'; ?></option>
+                        </select>
+                        <div class="role-hint" id="role-hint"></div>
+                    </div>
+                    <div class="field"><label><?php echo $is_sweet ? 'Start' : 'Start'; ?></label><input id="f-start" type="time" value="10:00"></div>
+                    <div class="field"><label><?php echo $is_sweet ? 'End' : 'End'; ?></label><input id="f-end" type="time" value="16:00"></div>
+                </div>
+                <div class="field"><label><?php echo $is_sweet ? 'Notes' : 'Notes'; ?></label><input id="f-notes" placeholder="<?php echo $is_sweet ? 'Section A, closer, training…' : 'Section, closer, training…'; ?>"></div>
+                <button type="submit" class="btn btn-primary" style="width:100%;" id="add-shift-btn" data-perm="admin.schedules.add_shift"><?php echo $is_sweet ? 'Add shift ✨' : 'Add shift'; ?></button>
+            </form>
+        </div>
+
+        <div class="print-bar no-print">
+            <button type="button" class="btn btn-secondary" id="print-week-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '🖨️ Print week' : 'Print week'; ?></button>
+            <button type="button" class="btn btn-secondary" id="print-today-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '🖨️ Print today' : 'Print today'; ?></button>
+            <button type="button" class="btn btn-secondary" id="download-week-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '⬇️ Save week (CSV)' : 'Save week (CSV)'; ?></button>
+            <button type="button" class="btn btn-ghost" id="download-html-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '⬇️ Save as HTML' : 'Save as HTML'; ?></button>
+        </div>
+
         <div class="card no-print" id="sched-vs-actual-card">
             <h2><?php echo $is_sweet ? 'Schedule vs actual (this week)' : 'Schedule vs actual'; ?></h2>
             <p class="hint" id="sched-vs-actual-hint" style="margin-top:-4px;"><?php echo $is_sweet
@@ -158,12 +225,7 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
                 <button type="button" class="btn btn-ghost btn-small" id="budget-save"><?php echo $is_sweet ? 'Save budget prefs 💾' : 'Save budget prefs'; ?></button>
             </div>
         </div>
-        <div class="print-bar no-print">
-            <button type="button" class="btn btn-secondary" id="print-week-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '🖨️ Print week' : 'Print week'; ?></button>
-            <button type="button" class="btn btn-secondary" id="print-today-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '🖨️ Print today' : 'Print today'; ?></button>
-            <button type="button" class="btn btn-secondary" id="download-week-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '⬇️ Save week (CSV)' : 'Save week (CSV)'; ?></button>
-            <button type="button" class="btn btn-ghost" id="download-html-btn" data-perm="admin.schedules.print"><?php echo $is_sweet ? '⬇️ Save as HTML' : 'Save as HTML'; ?></button>
-        </div>
+
         <div class="card no-print">
             <h2><?php echo $is_sweet ? 'Shift text & app alerts' : 'Shift alerts'; ?></h2>
             <p class="hint"><?php echo $is_sweet
@@ -195,46 +257,34 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
             <p class="alert-status" id="alert-status"></p>
             <button type="button" class="btn btn-primary" style="width:100%;margin-top:10px;" id="save-alerts-btn" data-perm="admin.schedules.add_shift"><?php echo $is_sweet ? 'Save alert settings ✨' : 'Save alert settings'; ?></button>
         </div>
-        <div class="card no-print">
-            <h2><?php echo $is_sweet ? 'Add shift' : 'Add shift'; ?></h2>
+
+        <div class="card no-print" id="trade-settings-card" data-perm="admin.schedules.manage_settings">
+            <h2><?php echo $is_sweet ? 'Trade settings' : 'Trade settings'; ?></h2>
             <p class="hint"><?php echo $is_sweet
-                ? 'Names come from Team & Roles. If someone has multiple roles, pick which hat they wear this shift 💕'
-                : 'Names come from Team & Roles. If someone has multiple roles, choose the role for this shift.'; ?></p>
-            <div class="team-empty" id="team-empty" style="display:none;">
-                <?php echo $is_sweet
-                    ? 'No active teammates yet — add your crew in <a href="/admin/roster">Team & Roles</a> first 💕'
-                    : 'No active teammates yet. Add staff in <a href="/admin/roster">Team & Roles</a> first.'; ?>
+                ? 'After a week is posted, the crew can give up, swap, or claim shifts. Keep manager approval on if you want to sign off first 💕'
+                : 'After a week is posted, staff can give up, swap, or claim. Approval on = you sign off first.'; ?></p>
+            <div class="toggle-row">
+                <label for="require-approval"><?php echo $is_sweet ? 'Require management approval' : 'Require management approval'; ?></label>
+                <input type="checkbox" id="require-approval" checked>
             </div>
-            <form id="shift-form">
-                <div class="field-row">
-                    <div class="field"><label><?php echo $is_sweet ? 'Day' : 'Day'; ?></label>
-                        <select id="f-day"><?php foreach ($days as $d): ?><option value="<?php echo $d; ?>"><?php echo $d; ?></option><?php endforeach; ?></select>
-                    </div>
-                    <div class="field"><label><?php echo $is_sweet ? 'Name' : 'Name'; ?></label>
-                        <select id="f-person" required>
-                            <option value=""><?php echo $is_sweet ? 'Select teammate…' : 'Select teammate…'; ?></option>
-                        </select>
-                    </div>
-                </div>
-                <div class="field-row">
-                    <div class="field">
-                        <label><?php echo $is_sweet ? 'Role for this shift' : 'Role for this shift'; ?></label>
-                        <select id="f-role" required>
-                            <option value=""><?php echo $is_sweet ? 'Pick a person first…' : 'Select person first…'; ?></option>
-                        </select>
-                        <div class="role-hint" id="role-hint"></div>
-                    </div>
-                    <div class="field"><label><?php echo $is_sweet ? 'Start' : 'Start'; ?></label><input id="f-start" type="time" value="10:00"></div>
-                    <div class="field"><label><?php echo $is_sweet ? 'End' : 'End'; ?></label><input id="f-end" type="time" value="16:00"></div>
-                </div>
-                <div class="field"><label><?php echo $is_sweet ? 'Notes' : 'Notes'; ?></label><input id="f-notes" placeholder="<?php echo $is_sweet ? 'Section A, closer, training…' : 'Section, closer, training…'; ?>"></div>
-                <button type="submit" class="btn btn-primary" style="width:100%;" id="add-shift-btn" data-perm="admin.schedules.add_shift"><?php echo $is_sweet ? 'Add shift ✨' : 'Add shift'; ?></button>
-            </form>
         </div>
-        <div class="card">
-            <h2><?php echo $is_sweet ? 'This week\'s board' : 'Week board'; ?></h2>
-            <div id="board"></div>
+
+        <div class="card no-print" id="approval-queue-card" data-perm="admin.schedules.approve">
+            <h2><?php echo $is_sweet ? 'Approval queue' : 'Approval queue'; ?></h2>
+            <p class="hint"><?php echo $is_sweet
+                ? 'Pending give-ups, swaps, and claims. Approving updates the week board so labor stays in sync.'
+                : 'Approve or deny pending trades. Approvals update the week board (and labor).'; ?></p>
+            <div id="approval-queue"><div class="empty"><?php echo $is_sweet ? 'Nothing waiting ✨' : 'No pending requests.'; ?></div></div>
         </div>
+
+        <div class="card no-print" data-perm-any="admin.team.spotlight.view,admin.team.spotlight.manage">
+            <h2><?php echo $is_sweet ? '⭐ Star of the house' : '⭐ Employee spotlight'; ?></h2>
+            <p class="hint"><?php echo $is_sweet
+                ? 'Pick employee of the week / month / quarter / custom — posts to Team Announcements and shows on the home banner 💕'
+                : 'Select employee of the week, month, quarter, or custom. Posts to announcements and the home banner.'; ?></p>
+            <a href="/admin/spotlight" class="btn btn-primary" style="width:100%;box-sizing:border-box;" data-perm-any="admin.team.spotlight.view,admin.team.spotlight.manage"><?php echo $is_sweet ? 'Open Star of the house' : 'Open employee spotlight'; ?></a>
+        </div>
+
         <div class="actions-bar no-print">
             <button type="button" class="btn btn-secondary" id="clear-week" data-perm="admin.schedules.clear_week"><?php echo $is_sweet ? 'Clear this week' : 'Clear this week'; ?></button>
             <a href="/admin/roster" class="btn btn-secondary"><?php echo $is_sweet ? '👥 Team' : 'Team'; ?></a>
@@ -244,12 +294,15 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     <div class="toast" id="toast"><?php echo $is_sweet ? 'Saved 💾' : 'Saved'; ?></div>
     <?php include 'bottom-nav.php'; ?>
     <script src="/ops-nudges.js?v=3"></script>
+    <script src="/schedule-shared.js?v=1"></script>
     <script>
     (function () {
         const KEY = 'pbj_admin_schedules_v1';
         const TEAM_KEYS = ['pbj_admin_team_v2', 'pbj_admin_team_v1'];
         const days = <?php echo json_encode($days); ?>;
         const isSweet = <?php echo $is_sweet ? 'true' : 'false'; ?>;
+        const userLabel = <?php echo json_encode($user_label); ?>;
+        var schedSync = null;
             function canP(key) {
                 if (window.PbjPerms && window.PbjPerms.loaded) return window.PbjPerms.can(key);
                 return true;
@@ -291,6 +344,7 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
                 applyWageVisibility();
                 try { if (typeof render === 'function') render(); } catch (e) {}
                 try { if (typeof paint === 'function') paint(); } catch (e) {}
+                try { if (typeof paintTradeUi === 'function') paintTradeUi(); } catch (e) {}
             }
 
 
@@ -314,17 +368,27 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
             };
         }
         function load() {
+            if (window.PbjSchedules) return window.PbjSchedules.loadLocal();
             try {
                 var r = JSON.parse(localStorage.getItem(KEY) || 'null');
                 if (!r || typeof r.weeks !== 'object') return { weeks: {}, alerts: defaultAlerts() };
                 if (!r.alerts || typeof r.alerts !== 'object') r.alerts = defaultAlerts();
                 if (!r.alerts.channels) r.alerts.channels = { inApp: true, browser: true, sms: false };
+                if (!r.posted) r.posted = {};
+                if (!r.settings) r.settings = { requireApproval: true };
+                if (!Array.isArray(r.requests)) r.requests = [];
                 return r;
-            } catch (e) { return { weeks: {}, alerts: defaultAlerts() }; }
+            } catch (e) { return { weeks: {}, alerts: defaultAlerts(), posted: {}, settings: { requireApproval: true }, requests: [] }; }
         }
         function save(t) {
-            localStorage.setItem(KEY, JSON.stringify(state));
+            if (window.PbjSchedules) {
+                state = window.PbjSchedules.saveLocal(state);
+                if (schedSync) schedSync.push(state);
+            } else {
+                localStorage.setItem(KEY, JSON.stringify(state));
+            }
             if (t) { var el = document.getElementById('toast'); el.classList.add('show'); setTimeout(function () { el.classList.remove('show'); }, 1100); }
+            try { paintTradeUi(); } catch (e) {}
         }
         function alertMinutesValue() {
             var a = state.alerts || defaultAlerts();
@@ -913,12 +977,15 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
                     .sort(function (a, b) { return (a.start || '').localeCompare(b.start || ''); });
                 var body = dayShifts.length
                     ? dayShifts.map(function (s) {
-                        return '<div class="shift">' +
+                        var openBadge = s.open ? '<span class="badge badge-open">' + (isSweet ? 'Open' : 'Open') + '</span>' : '';
+                        var was = (s.open && s.originalName) ? ' · was ' + s.originalName : '';
+                        return '<div class="shift' + (s.open ? ' is-open' : '') + '">' +
                             '<div class="shift-main"><div class="shift-name">' + esc(s.name) +
                             (s.role ? '<span class="badge">' + esc(s.role) + '</span>' : '') +
+                            openBadge +
                             '</div>' +
                             '<div class="shift-meta">' + esc(fmtTime(s.start)) + ' – ' + esc(fmtTime(s.end)) +
-                            (s.notes ? ' · ' + esc(s.notes) : '') + '</div></div>' +
+                            (s.notes ? ' · ' + esc(s.notes) : '') + esc(was) + '</div></div>' +
                             '<button type="button" class="btn btn-small btn-danger" data-need-perm="admin.schedules.add_shift" data-del="' + esc(s.id) + '">' + (isSweet ? 'Remove' : 'Remove') + '</button>' +
                             '</div>';
                     }).join('')
@@ -927,8 +994,63 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
             }).join('');
         }
 
-        document.getElementById('prev-week').addEventListener('click', function () { weekOffset--; render(); });
-        document.getElementById('next-week').addEventListener('click', function () { weekOffset++; render(); });
+        function paintTradeUi() {
+            var S = window.PbjSchedules;
+            var key = (function () {
+                try { return weekKey(currentMonday()); } catch (e) { return ''; }
+            })();
+            var posted = S ? S.isWeekPosted(state, key) : !!(state.posted && state.posted[key]);
+            var banner = document.getElementById('posted-banner');
+            var postBtn = document.getElementById('post-week-btn');
+            if (banner) {
+                banner.className = 'posted-banner no-print ' + (posted ? 'is-posted' : 'is-draft');
+                if (posted) {
+                    var meta = (state.posted && state.posted[key]) || {};
+                    var when = meta.at ? new Date(meta.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+                    banner.textContent = isSweet
+                        ? ('Posted' + (meta.by && meta.by !== 'migration' ? ' by ' + meta.by : '') + (when ? ' · ' + when : '') + ' — crew can give up, swap, or claim.')
+                        : ('Posted' + (meta.by && meta.by !== 'migration' ? ' · ' + meta.by : '') + (when ? ' · ' + when : '') + '. Staff can trade.');
+                } else {
+                    banner.textContent = isSweet
+                        ? 'Draft week — post it when the board is ready so the crew can trade 💕'
+                        : 'Draft week. Post it when ready so staff can trade.';
+                }
+            }
+            if (postBtn) {
+                postBtn.textContent = posted
+                    ? (isSweet ? '📣 Posted' : 'Posted')
+                    : (isSweet ? '📣 Post this week' : 'Post this week');
+                postBtn.disabled = !!posted;
+            }
+            var tog = document.getElementById('require-approval');
+            if (tog) {
+                var on = !(state.settings && state.settings.requireApproval === false);
+                tog.checked = on;
+            }
+            var q = document.getElementById('approval-queue');
+            if (q) {
+                var pending = S ? S.pendingRequests(state) : ((state.requests || []).filter(function (r) { return r.status === 'pending_approval'; }));
+                if (!pending.length) {
+                    q.innerHTML = '<div class="empty">' + (isSweet ? 'Nothing waiting ✨' : 'No pending requests.') + '</div>';
+                } else {
+                    q.innerHTML = pending.map(function (r) {
+                        var shift = S ? S.findShift(state, r.weekKey, r.shiftId) : null;
+                        var when = shift ? (shift.day + ' ' + fmtTime(shift.start) + '–' + fmtTime(shift.end)) : r.weekKey;
+                        var label = S ? S.requestLabel(r, isSweet) : (r.type + ' · ' + (r.fromName || ''));
+                        return '<div class="req-row">' +
+                            '<div>' + esc(label) + '</div>' +
+                            '<div class="req-meta">' + esc(when) + (r.note ? ' · ' + esc(r.note) : '') + '</div>' +
+                            '<div class="req-actions">' +
+                            '<button type="button" class="btn btn-primary btn-small" data-approve="' + esc(r.id) + '">' + (isSweet ? 'Approve' : 'Approve') + '</button>' +
+                            '<button type="button" class="btn btn-danger btn-small" data-deny="' + esc(r.id) + '">' + (isSweet ? 'Deny' : 'Deny') + '</button>' +
+                            '</div></div>';
+                    }).join('');
+                }
+            }
+        }
+
+        document.getElementById('prev-week').addEventListener('click', function () { weekOffset--; render(); paintTradeUi(); });
+        document.getElementById('next-week').addEventListener('click', function () { weekOffset++; render(); paintTradeUi(); });
 
         document.getElementById('f-person').addEventListener('change', fillRoleSelect);
 
@@ -1071,9 +1193,79 @@ $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
                 }
             }).catch(function () {});
 
+        var postBtn = document.getElementById('post-week-btn');
+        if (postBtn) {
+            postBtn.addEventListener('click', function () {
+                if (!canP('admin.schedules.add_shift')) return;
+                var key = ensureWeek();
+                if (!(state.weeks[key] || []).length) {
+                    alert(isSweet ? 'Add at least one shift before posting 💕' : 'Add at least one shift before posting.');
+                    return;
+                }
+                if (window.PbjSchedules && window.PbjSchedules.isWeekPosted(state, key)) return;
+                if (!confirm(isSweet ? 'Post this week? The crew can then give up, swap, or claim.' : 'Post this week so staff can trade?')) return;
+                if (window.PbjSchedules) state = window.PbjSchedules.postWeek(state, key, userLabel);
+                else {
+                    state.posted = state.posted || {};
+                    state.posted[key] = { at: Date.now(), by: userLabel };
+                }
+                save(true);
+                render();
+            });
+        }
+        var tog = document.getElementById('require-approval');
+        if (tog) {
+            tog.addEventListener('change', function () {
+                if (!canP('admin.schedules.manage_settings')) {
+                    this.checked = !this.checked;
+                    return;
+                }
+                if (window.PbjSchedules) state = window.PbjSchedules.setRequireApproval(state, this.checked);
+                else {
+                    state.settings = state.settings || {};
+                    state.settings.requireApproval = this.checked;
+                }
+                save(true);
+            });
+        }
+        var qEl = document.getElementById('approval-queue');
+        if (qEl) {
+            qEl.addEventListener('click', function (e) {
+                var okBtn = e.target.closest('[data-approve]');
+                var noBtn = e.target.closest('[data-deny]');
+                if (!okBtn && !noBtn) return;
+                if (!canP('admin.schedules.approve')) return;
+                if (!window.PbjSchedules) return;
+                var id = (okBtn || noBtn).getAttribute(okBtn ? 'data-approve' : 'data-deny');
+                var res = okBtn
+                    ? window.PbjSchedules.approveRequest(state, id, userLabel, team)
+                    : window.PbjSchedules.denyRequest(state, id, userLabel);
+                if (!res.ok) {
+                    alert(res.message || (isSweet ? 'Couldn’t update that request' : 'Could not update that request.'));
+                    return;
+                }
+                state = res.state;
+                save(true);
+                render();
+            });
+        }
+
         fillPersonSelect();
         paintAlertForm();
         render();
+        paintTradeUi();
+        if (window.PbjSchedules) {
+            schedSync = window.PbjSchedules.wire({
+                getState: function () { return state; },
+                setState: function (next) {
+                    state = next;
+                    paintAlertForm();
+                    render();
+                    paintTradeUi();
+                },
+                statusEl: 'sched-sync-pill'
+            });
+        }
             if (window.PbjPerms && window.PbjPerms.ready) window.PbjPerms.ready.then(applySchedPerms);
             document.addEventListener('pbj-perms-ready', applySchedPerms);
     })();

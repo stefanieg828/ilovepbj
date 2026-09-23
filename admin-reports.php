@@ -115,19 +115,19 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         <div class="section-label"><?php echo $is_sweet ? 'Core numbers' : 'Core numbers'; ?></div>
         <div class="grid">
             <a href="/admin/setup" class="card">
-                <?php pbj_render_card_icon('reports-hub/sales', 'House setup', '🏠'); ?>
+                <?php pbj_render_card_icon('ops-hub/settings', 'House setup', '🏠'); ?>
                 <h3><?php echo $is_sweet ? 'House setup' : 'House setup'; ?></h3>
                 <p><?php echo $is_sweet ? 'POS · labor · opex · cash · invoices checklist' : 'Launch checklist for a new house'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Start here' : 'Start'; ?></span>
             </a>
             <a href="/admin/pos-connect" class="card">
-                <?php pbj_render_card_icon('reports-hub/sales', 'POS Connections', '🔗'); ?>
+                <?php pbj_render_card_icon('showtime/pos', 'POS Connections', '🔗'); ?>
                 <h3><?php echo $is_sweet ? 'POS Connections' : 'POS Connections'; ?></h3>
                 <p><?php echo $is_sweet ? 'Square · Clover OAuth · Toast partner · live sync' : 'Square, Clover OAuth · Toast partner · live sync'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Live' : 'Live'; ?></span>
             </a>
             <a href="/admin/pos-import" class="card">
-                <?php pbj_render_card_icon('reports-hub/sales', 'POS CSV Import', '📥'); ?>
+                <?php pbj_render_card_icon('pos-hub/payments', 'POS CSV Import', '📥'); ?>
                 <h3><?php echo $is_sweet ? 'POS CSV Import' : 'POS CSV Import'; ?></h3>
                 <p><?php echo $is_sweet ? 'Toast / Square / Clover day exports → Daily Sales' : 'Import day-level POS CSV into sales log'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Bridge' : 'Bridge'; ?></span>
@@ -143,6 +143,12 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
                 <h3>Labor Snapshot</h3>
                 <p><?php echo $is_sweet ? 'Schedule clocks now · POS punches & labor $ later' : 'Schedule clocks now · POS punches & labor $ later'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Manual now · POS later' : 'Manual now · POS later'; ?></span>
+            </a>
+            <a href="/admin/reports/weekly-snapshot" class="card">
+                <?php pbj_render_card_icon('jelly/announcements', 'Weekly Owner Snapshot', '📬'); ?>
+                <h3><?php echo $is_sweet ? 'Weekly Owner Snapshot' : 'Weekly Owner Snapshot'; ?></h3>
+                <p><?php echo $is_sweet ? 'Monday pulse — dishes, 86s, lists, labor' : 'Monday pulse: FC%, 86s, checklists, labor'; ?></p>
+                <span class="pill"><?php echo $is_sweet ? 'Owners · GMs' : 'Owners · GMs'; ?></span>
             </a>
             <a href="/admin/trends" class="card">
                 <?php pbj_render_card_icon('reports-hub/trends', 'Weekly Trends', '📊'); ?>
@@ -174,19 +180,19 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
         <div class="section-label"><?php echo $is_sweet ? 'Food cost tools (optional)' : 'Food cost tools (optional)'; ?></div>
         <div class="grid">
             <a href="/admin/pmix" class="card">
-                <?php pbj_render_card_icon('reports-hub/pnl', 'PMIX', '📊'); ?>
+                <?php pbj_render_card_icon('reports-hub/costing', 'PMIX', '🧮'); ?>
                 <h3><?php echo $is_sweet ? 'PMIX / ideal FC' : 'PMIX / ideal FC'; ?></h3>
                 <p><?php echo $is_sweet ? 'Product mix → theoretical food cost $' : 'Product mix → ideal food cost'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Optional' : 'Optional'; ?></span>
             </a>
             <a href="/admin/waste" class="card">
-                <?php pbj_render_card_icon('reports-hub/comps', 'Waste log', '🗑️'); ?>
+                <?php pbj_render_card_icon('reports-hub/waste', 'Waste log', '🗑️'); ?>
                 <h3><?php echo $is_sweet ? 'Waste log' : 'Waste log'; ?></h3>
                 <p><?php echo $is_sweet ? 'Spoilage &amp; over-prep dollars' : 'Spoilage and over-prep dollars'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Optional' : 'Optional'; ?></span>
             </a>
             <a href="/BOH/menu" class="card">
-                <?php pbj_render_card_icon('reports-hub/trends', 'Menu engineering', '⭐'); ?>
+                <?php pbj_render_card_icon('recipes-hub/menu-engineering', 'Menu engineering', '⭐'); ?>
                 <h3><?php echo $is_sweet ? 'Menu engineering' : 'Menu engineering'; ?></h3>
                 <p><?php echo $is_sweet ? 'Plate cost · Star / Plowhorse matrix' : 'Plate cost & Star matrix'; ?></p>
                 <span class="pill"><?php echo $is_sweet ? 'Optional' : 'Optional'; ?></span>

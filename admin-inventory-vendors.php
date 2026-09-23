@@ -112,7 +112,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <a href="/admin/auto-order" class="card">
                 <?php pbj_render_card_icon('inventory-hub/auto-order', 'Auto-Order', '🤖'); ?>
                 <h3><?php echo $is_sweet ? 'Auto-Order' : 'Auto-Order'; ?></h3>
-                <p><?php echo $is_sweet ? 'Build list by vendor · export · email' : 'Build list by vendor, export, email'; ?></p>
+                <p><?php echo $is_sweet ? 'Vendor CSV · Print/PDF · email' : 'Vendor CSV, Print/PDF, email'; ?></p>
             </a>
             <a href="/admin/product-list" class="card">
                 <?php pbj_render_card_icon('inventory-hub/product-list', 'Master Product List', '📃'); ?>
@@ -131,7 +131,7 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             <a href="/admin/order-guides" class="card">
                 <?php pbj_render_card_icon('inventory-hub/order-guides', 'Order Guides', '🛒'); ?>
                 <h3>Order Guides</h3>
-                <p><?php echo $is_sweet ? 'Saved order templates (optional)' : 'Saved order templates (optional)'; ?></p>
+                <p><?php echo $is_sweet ? 'Vendor CSV & Print/PDF templates' : 'Vendor CSV & Print/PDF templates'; ?></p>
             </a>
             <a href="/admin/invoices" class="card" id="card-invoices">
                 <?php pbj_render_card_icon('inventory-hub/invoices', 'Invoices', '🧾'); ?>
@@ -141,33 +141,11 @@ $is_sweet = ($_SESSION['theme'] ?? 'sweet') === 'sweet';
             </a>
         </div>
 
-        <div class="section-label"><?php echo $is_sweet ? 'Food cost (optional)' : 'Food cost (optional)'; ?></div>
-        <div class="grid">
-            <a href="/admin/waste" class="card">
-                <?php pbj_render_card_icon('inventory-hub/invoices', 'Waste log', '🗑️'); ?>
-                <h3><?php echo $is_sweet ? 'Waste log' : 'Waste log'; ?></h3>
-                <p><?php echo $is_sweet ? 'Spoilage, over-prep, trim — optional' : 'Spoilage & over-prep (optional)'; ?></p>
-                <span class="pill"><?php echo $is_sweet ? 'Optional' : 'Optional'; ?></span>
-            </a>
-            <a href="/admin/pmix" class="card">
-                <?php pbj_render_card_icon('inventory-hub/product-list', 'PMIX', '📊'); ?>
-                <h3><?php echo $is_sweet ? 'PMIX / ideal FC' : 'PMIX / ideal FC'; ?></h3>
-                <p><?php echo $is_sweet ? 'Qty sold × plate cost → ideal food $' : 'Qty × plate cost → ideal food $'; ?></p>
-                <span class="pill"><?php echo $is_sweet ? 'Optional' : 'Optional'; ?></span>
-            </a>
-            <a href="/BOH/menu" class="card">
-                <?php pbj_render_card_icon('inventory-hub/product-setup', 'Menu engineering', '⭐'); ?>
-                <h3><?php echo $is_sweet ? 'Menu engineering' : 'Menu engineering'; ?></h3>
-                <p><?php echo $is_sweet ? 'Plate cost · FC% · Star matrix' : 'Plate cost, FC%, Star matrix'; ?></p>
-                <span class="pill"><?php echo $is_sweet ? 'Optional matrix' : 'Optional'; ?></span>
-            </a>
-        </div>
 
         <div class="intro" id="invoice-cost-nudge" hidden style="margin-top:12px;"></div>
         <p class="hint" id="status-hint" style="margin-top:14px;"></p>
 
         <div class="actions-bar">
-            <a href="/admin/settings" class="btn-secondary"><?php echo $is_sweet ? '📞 Phone list' : 'Phone list'; ?></a>
             <a href="/admin" class="btn-primary"><?php echo pbj_hub_label('admin'); ?></a>
         </div>
     </div>

@@ -737,13 +737,13 @@ if (function_exists('pbj_render_icon_css')) {
 <script src="/permissions.js?v=1"></script>
 <script src="/shared-state.js?v=4"></script>
 <script src="/checklist-complete.js?v=1"></script>
-<script src="/checklist-assign.js?v=1"></script>
+<script src="/checklist-assign.js?v=2"></script>
 <script src="/inv-shared-sync.js?v=1"></script>
 <script src="/sales-playground-client.js?v=2"></script>
 <script>
 (function () {
     if (!('serviceWorker' in navigator)) return;
     // Register once per session load so Count Stock / Product Setup cache for offline walks
-    navigator.serviceWorker.register('/sw.js?v=5').catch(function () {});
+    navigator.serviceWorker.register('/sw.js?v=6').catch(function () {});
 })();
 </script>
