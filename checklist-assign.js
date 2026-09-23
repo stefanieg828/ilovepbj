@@ -131,7 +131,7 @@
             '.assign-badge{display:inline-block;margin-top:4px;font-size:0.78rem;border-radius:999px;padding:2px 8px;background:' + badgeBg + ';color:' + badgeFg + ';}' +
             '.assign-badge.mine{background:' + mineBg + ';color:' + mineFg + ';}' +
             '.assign-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}' +
-            '.assign-filters .filter-chip,.filter-chip{border:none;border-radius:999px;padding:8px 14px;font-size:0.9rem;cursor:pointer;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.06);color:inherit;}' +
+            '.assign-filters .filter-chip,.filter-chip{border:none;border-radius:999px;padding:8px 14px;font-size:0.9rem;cursor:pointer;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.06);color:inherit;font-family:' + (isSweet ? "'DreamingOutLoudPro', serif" : "'Lora', serif") + ';}' +
             '.assign-filters .filter-chip.active,.filter-chip.active{background:' + activeBg + ';color:white;}' +
             '@media print{.assign-filters{display:none!important;}}';
         document.head.appendChild(s);
